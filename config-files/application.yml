@@ -1,0 +1,13 @@
+spring:
+  cloud:
+    config:
+      fail-fast: false
+
+management:
+  tracing:
+    sampling:
+      probability: 1.0
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs

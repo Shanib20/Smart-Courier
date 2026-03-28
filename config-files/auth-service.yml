@@ -1,0 +1,34 @@
+server:
+  port: 8081
+
+spring:
+  datasource:
+    url: jdbc:mysql://localhost:3306/auth_db?createDatabaseIfNotExist=true
+    username: root
+    password: Shanib@123
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka/
+
+management:
+  zipkin:
+    tracing:
+      endpoint: http://localhost:9411/api/v2/spans
+
+jwt:
+  secret: dGhpc2lzYXZlcnlsb25nc2VjcmV0a2V5Zm9yc21hcnRjb3VyaWVy
+  expiration: 86400000
+
+springdoc:
+  swagger-ui:
+    enabled: false
