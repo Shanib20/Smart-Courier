@@ -58,7 +58,7 @@ class AdminServiceTest {
 
     @Test
     void resolveDeliveryShouldDelegateMappedStatus() {
-        when(deliveryClient.updateStatus(1L, "BOOKED", "ADMIN", "admin@smartcourier.com"))
+        when(deliveryClient.updateStatus(1L, Map.of("status", "BOOKED"), "ADMIN", "admin@smartcourier.com"))
                 .thenReturn(Map.of("status", "BOOKED"));
 
         Map<String, Object> response = adminService.resolveDelivery(1L, "retry");

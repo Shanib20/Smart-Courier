@@ -166,20 +166,6 @@ export default function Signup() {
                   </button>
                 </div>
               </div>
-              <div className="auth-form-group">
-                <label htmlFor="role">Account Type</label>
-                <select 
-                  id="role" 
-                  name="role"
-                  className="auth-input" 
-                  value={formData.role}
-                  onChange={handleChange}
-                  style={{ appearance: 'auto' }}
-                >
-                  <option value="CUSTOMER">Customer</option>
-                  <option value="ADMIN">Administrator</option>
-                </select>
-              </div>
               <button type="submit" className="auth-submit-btn" disabled={loading}>
                 <span>{loading ? 'Creating Account...' : 'Sign Up'}</span>
                 <UserPlus size={18} />

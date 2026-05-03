@@ -30,12 +30,13 @@ public class AuthService {
     private EmailService emailService;
 
     public AuthResponse signup(SignupRequest request) {
-        if (userRepository.existsByEmail(request.getEmail())) {
+        String email = request.getEmail().toLowerCase();
+        if (userRepository.existsByEmail(email)) {
             throw new RuntimeException("Email already registered. Please login.");
         }
         User user = new User();
         user.setName(request.getName());
-        user.setEmail(request.getEmail());
+        user.setEmail(email);
         user.setPassword(passwordEncoder.encode(request.getPassword()));
         user.setRole(User.Role.CUSTOMER); // Force Customer Role for public signups
         user.setVerified(false);
@@ -53,7 +54,8 @@ public class AuthService {
     }
 
     public AuthResponse login(LoginRequest request) {
-        User user = userRepository.findByEmail(request.getEmail())
+        String email = request.getEmail().toLowerCase();
+        User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("No account found with this email."));
         
         if (user.getStatus() == AccountStatus.SUSPENDED) {
@@ -87,10 +89,11 @@ public class AuthService {
     }
 
     public String verifyEmail(String email, String otp) {
-        if (!otpService.validateOtp(email, otp)) {
+        String normalizedEmail = email.toLowerCase();
+        if (!otpService.validateOtp(normalizedEmail, otp)) {
             throw new RuntimeException("Invalid or expired OTP");
         }
-        User user = userRepository.findByEmail(email)
+        User user = userRepository.findByEmail(normalizedEmail)
                 .orElseThrow(() -> new RuntimeException("User not found"));
         user.setVerified(true);
         userRepository.save(user);

@@ -45,6 +45,29 @@ export default function Profile() {
   });
 
   useEffect(() => {
+    const pincode = addressForm.pincode;
+    if (pincode && pincode.length === 6) {
+      const fetchAddress = async () => {
+        try {
+          const res = await fetch(`https://api.postalpincode.in/pincode/${pincode}`);
+          const data = await res.json();
+          if (data[0].Status === 'Success') {
+            const postOffice = data[0].PostOffice[0];
+            setAddressForm(prev => ({
+              ...prev,
+              city: postOffice.District,
+              state: postOffice.State
+            }));
+          }
+        } catch (err) {
+          console.error("Pincode lookup failed", err);
+        }
+      };
+      fetchAddress();
+    }
+  }, [addressForm.pincode]);
+
+  useEffect(() => {
     fetchProfile();
   }, []);
 

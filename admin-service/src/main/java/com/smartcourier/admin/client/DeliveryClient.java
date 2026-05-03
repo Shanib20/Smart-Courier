@@ -4,6 +4,7 @@ import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestParam;
 
@@ -21,7 +22,7 @@ public interface DeliveryClient {
     @PutMapping("/{id}/status")
     Map<String, Object> updateStatus(
             @PathVariable("id") Long id,
-            @RequestParam("status") String status,
+            @RequestBody Map<String, String> statusRequest,
             @RequestHeader("X-User-Role") String role,
             @RequestHeader("X-User-Email") String email);
 

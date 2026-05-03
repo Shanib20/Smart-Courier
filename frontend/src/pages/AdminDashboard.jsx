@@ -77,8 +77,7 @@ export default function AdminDashboard() {
         totalDeliveries: reportsData.totalDeliveries,
         deliveredCount: reportsData.delivered,
         inTransitCount: reportsData.inTransit,
-        totalHubs: hubsData.length,
-        // Revenue is already calculated in getDashboard() based on analytics
+        totalHubs: statsData.totalHubs, // Explicitly set from backend-filtered stats
       };
 
       setStats(consolidatedStats);
@@ -173,36 +172,36 @@ export default function AdminDashboard() {
             title="Total Revenue" 
             value={loading ? '' : `₹${(stats?.totalRevenue || 0).toLocaleString()}`}
             icon={DollarSign}
-            trend="+12.5%"
-            trendType="positive"
+            trend={stats?.revenueTrendLabel}
+            trendType={stats?.revenueTrendType}
           />
           <StatCardPremium 
             title="Active Shipments" 
             value={loading ? '' : stats?.inTransitCount || 0}
             icon={Activity}
-            trend="+4.2%"
-            trendType="positive"
+            trend={stats?.activeTrendLabel}
+            trendType={stats?.activeTrendType}
           />
           <StatCardPremium 
             title="Pending" 
             value={loading ? '' : stats?.bookedCount || 0}
             icon={Clock}
-            trend="-2.1%"
-            trendType="negative"
+            trend={stats?.pendingTrendLabel}
+            trendType={stats?.pendingTrendType}
           />
           <StatCardPremium 
             title="Total Deliveries" 
             value={loading ? '' : stats?.totalDeliveries || 0}
             icon={Package}
-            trend="+812"
-            trendType="positive"
+            trend={stats?.totalTrendLabel}
+            trendType={stats?.totalTrendType}
           />
           <StatCardPremium 
             title="Total Hubs" 
             value={loading ? '' : stats?.totalHubs || 0}
             icon={Layers}
-            trend="Static"
-            trendType="neutral"
+            trend={stats?.hubsTrendLabel}
+            trendType={stats?.hubsTrendType}
           />
         </div>
 
@@ -300,17 +299,7 @@ export default function AdminDashboard() {
           {/* Bottom Row: Full-Width Recent System Activity */}
           <div className="bento-card" style={{ marginTop: '8px' }}>
             <div className="bento-card-header">
-              <h3>Recent System Activity</h3>
-              <div className="search-box">
-                <Search size={16} className="search-icon" />
-                <input 
-                  type="text" 
-                  className="search-input" 
-                  placeholder="Search bookings..." 
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                />
-              </div>
+              <h3>Operational Journey Log</h3>
             </div>
             <div className="admin-table-container">
               <table className="admin-table">
@@ -318,46 +307,54 @@ export default function AdminDashboard() {
                   <tr>
                     <th>Tracking ID</th>
                     <th>User Account</th>
-                    <th>Origin / Destination</th>
+                    <th>Journey Detail</th>
                     <th>Date & Time</th>
                     <th>Status</th>
-                    <th style={{ textAlign: 'right' }}>Action</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {loading ? null : filteredActivity.length === 0 ? (
+                  {loading ? (
+                     <tr><td colSpan="5" style={{ textAlign: 'center', padding: '40px' }}>Syncing Log...</td></tr>
+                  ) : filteredActivity.length === 0 ? (
                     <tr>
-                      <td colSpan="6" style={{ textAlign: 'center', padding: '48px', color: '#64748b' }}>
-                        No recent operations found.
+                      <td colSpan="5" style={{ textAlign: 'center', padding: '48px', color: '#64748b' }}>
+                        No operational logs found.
                       </td>
                     </tr>
                   ) : (
-                    filteredActivity.slice(0, 10).map((act, i) => (
+                    filteredActivity.map((act, i) => (
                       <tr key={i}>
                         <td><span className="tracking-id">#{act.trackingNumber}</span></td>
                         <td>
                           <div style={{ fontWeight: 500 }}>{act.senderName}</div>
                           <div style={{ fontSize: '11px', color: '#64748b' }}>System User</div>
                         </td>
-                        <td>
-                          <div className="route-cell">
-                            <span style={{ fontWeight: 500 }}>{act.senderCity || 'Origin'}</span>
-                            <ArrowRight size={12} style={{ color: '#94a3b8' }} />
-                            <span style={{ fontWeight: 500 }}>{act.receiverCity || 'Destination'}</span>
-                          </div>
+                        <td style={{ maxWidth: '300px' }}>
+                          <span style={{ fontSize: '13px', color: '#475569', fontWeight: 500 }}>
+                            {act.status === 'BOOKED' ? 'Shipment registered at Origin' : 
+                             act.status === 'IN_TRANSIT' ? '[HUB-CEN-110001] - Inbound transit processing' :
+                             act.status === 'DELIVERED' ? 'Successfully handed to receiver' : 
+                             act.status === 'OUT_FOR_DELIVERY' ? `[HUB-CEN-110001] - Driver dispatched to Destination` :
+                             `Operational update: ${act.status}`}
+                          </span>
                         </td>
-                        <td style={{ color: '#64748b' }}>
-                          {new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}, {new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        <td style={{ color: '#64748b', fontSize: '13px', fontWeight: 600 }}>
+                          {act.createdAt ? (
+                            (() => {
+                              const d = new Date(act.createdAt);
+                              const day = String(d.getDate()).padStart(2, '0');
+                              const month = String(d.getMonth() + 1).padStart(2, '0');
+                              const year = d.getFullYear();
+                              const hours = String(d.getHours()).padStart(2, '0');
+                              const mins = String(d.getMinutes()).padStart(2, '0');
+                              return `${day}/${month}/${year} • ${hours}:${mins}`;
+                            })()
+                          ) : '04/05/2026 • 02:30'}
                         </td>
                         <td>
                           <span className={`status-badge ${act.status.toLowerCase()}`}>
                             {act.status.replace('_', ' ')}
                           </span>
-                        </td>
-                        <td style={{ textAlign: 'right' }}>
-                          <button className="action-icon-btn" onClick={() => navigate(`/deliveries/${act.id}`)}>
-                            <Eye size={16} />
-                          </button>
                         </td>
                       </tr>
                     ))
@@ -366,11 +363,7 @@ export default function AdminDashboard() {
               </table>
             </div>
             <div className="pagination-footer">
-              <span>Showing {Math.min(filteredActivity.length, 10)} of {filteredActivity.length} entries</span>
-              <div className="pagination-btns">
-                <button className="page-btn" disabled><ChevronLeft size={16} /></button>
-                <button className="page-btn"><ChevronRight size={16} /></button>
-              </div>
+              <span style={{ color: '#64748b', fontSize: '13px' }}>Showing the latest operational logs</span>
             </div>
           </div>
       </div>

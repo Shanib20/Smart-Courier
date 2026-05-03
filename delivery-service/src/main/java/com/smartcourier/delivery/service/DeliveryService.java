@@ -12,6 +12,8 @@ import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -20,6 +22,8 @@ import java.util.Locale;
 
 @Service
 public class DeliveryService {
+
+    private static final Logger log = LoggerFactory.getLogger(DeliveryService.class);
 
     private final DeliveryRepository deliveryRepository;
     private final RabbitTemplate rabbitTemplate;
@@ -41,9 +45,10 @@ public class DeliveryService {
 
     public Delivery createDelivery(DeliveryRequest request,
                                    String customerEmail) {
+        String normalizedEmail = customerEmail.toLowerCase();
         Delivery delivery = new Delivery();
         delivery.setTrackingNumber(generateTrackingNumber());
-        delivery.setCustomerEmail(customerEmail);
+        delivery.setCustomerEmail(normalizedEmail);
         delivery.setSenderName(request.getSenderName());
         delivery.setSenderPhone(request.getSenderPhone());
         delivery.setReceiverName(request.getReceiverName());
@@ -77,14 +82,15 @@ public class DeliveryService {
 
     public void sendReceipt(Long id, String customerEmail) {
         Delivery delivery = getById(id);
-        if (!delivery.getCustomerEmail().equals(customerEmail)) {
+        if (!delivery.getCustomerEmail().equalsIgnoreCase(customerEmail)) {
             throw new RuntimeException("You can only request a receipt for your own delivery");
         }
-        publishBookingCreatedEvent(delivery);
+        // Force sending email regardless of user settings
+        publishBookingCreatedEvent(delivery, true);
     }
 
     public Page<Delivery> getMyDeliveries(String customerEmail, Pageable pageable) {
-        return deliveryRepository.findByCustomerEmail(customerEmail, pageable);
+        return deliveryRepository.findByCustomerEmail(customerEmail.toLowerCase(), pageable);
     }
 
     public Delivery getById(Long id) {
@@ -189,7 +195,7 @@ public class DeliveryService {
 
     public Delivery cancelDelivery(Long id, String customerEmail) {
         Delivery delivery = getById(id);
-        if (!delivery.getCustomerEmail().equals(customerEmail)) {
+        if (!delivery.getCustomerEmail().equalsIgnoreCase(customerEmail)) {
             throw new RuntimeException("You can only cancel your own delivery");
         }
         if (delivery.getStatus() != DeliveryStatus.BOOKED) {
@@ -213,14 +219,21 @@ public class DeliveryService {
     }
 
     private void publishBookingCreatedEvent(Delivery delivery) {
+        publishBookingCreatedEvent(delivery, false);
+    }
+
+    private void publishBookingCreatedEvent(Delivery delivery, boolean isManualReceipt) {
         BookingCreatedEvent event = new BookingCreatedEvent(
-            delivery.getTrackingNumber(),
-            delivery.getCustomerEmail(),
-            delivery.getSenderName(),
-            delivery.getReceiverName(),
-            delivery.getChargeAmount(),
-            delivery.getEstimatedDeliveryDate()
+                delivery.getTrackingNumber(),
+                delivery.getCustomerEmail(),
+                delivery.getSenderName(),
+                delivery.getReceiverName(),
+                delivery.getChargeAmount(),
+                delivery.getEstimatedDeliveryDate(),
+                isManualReceipt
         );
         rabbitTemplate.convertAndSend(exchange, "booking.created", event);
+        log.info("Published booking created event for tracking: {} (Manual: {})", 
+                 delivery.getTrackingNumber(), isManualReceipt);
     }
 }

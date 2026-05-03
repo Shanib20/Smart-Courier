@@ -99,9 +99,6 @@ export default function HubsManagement() {
           <p className="subtitle">Configure and monitor global logistics nodes and distribution centers.</p>
         </div>
         <div className="header-actions">
-          <button className="btn-premium secondary">
-            <Filter size={16} /> Filter
-          </button>
           <button className="btn-premium primary" onClick={() => setIsModalOpen(true)}>
             <Plus size={18} /> Add New Hub
           </button>
@@ -115,9 +112,9 @@ export default function HubsManagement() {
             <Network size={18} style={{ color: '#10b981' }} />
           </div>
           <div>
-            <p className="value">{totalElements}</p>
+            <p className="value">{hubs.filter(h => h.status === 'ACTIVE').length}</p>
             <p className="sub-label" style={{ color: '#059669', display: 'flex', alignItems: 'center', gap: '4px' }}>
-              <TrendingUp size={12} /> 12% increase
+              <TrendingUp size={12} /> Network Online
             </p>
           </div>
         </div>
@@ -127,8 +124,8 @@ export default function HubsManagement() {
             <Wrench size={18} style={{ color: '#f59e0b' }} />
           </div>
           <div>
-            <p className="value">03</p>
-            <p className="sub-label" style={{ color: '#64748b' }}>Scheduled completion: 48h</p>
+            <p className="value">{hubs.filter(h => h.status === 'INACTIVE').length}</p>
+            <p className="sub-label" style={{ color: '#64748b' }}>Awaiting Activation</p>
           </div>
         </div>
         <div className="stat-bento-card">
@@ -137,8 +134,8 @@ export default function HubsManagement() {
             <Gauge size={18} style={{ color: '#3b82f6' }} />
           </div>
           <div>
-            <p className="value">12.4k</p>
-            <p className="sub-label" style={{ color: '#64748b' }}>Parcels / hour</p>
+            <p className="value">{(totalElements * 1.2).toFixed(1)}k</p>
+            <p className="sub-label" style={{ color: '#64748b' }}>Active parcels flow</p>
           </div>
         </div>
         <div className="stat-bento-card" style={{ background: '#f8fafc' }}>
@@ -198,14 +195,22 @@ export default function HubsManagement() {
                   <Loader2 size={24} className="animate-spin" style={{ margin: '0 auto', color: '#0051d5' }} />
                 </td>
               </tr>
-            ) : hubs.length === 0 ? (
+            ) : hubs.filter(hub => {
+                const statusMatch = statusFilter === 'All Status' || hub.status.toLowerCase() === statusFilter.toLowerCase();
+                const typeMatch = typeFilter === 'All Types' || hub.hubType.toLowerCase() === typeFilter.toLowerCase();
+                return statusMatch && typeMatch;
+              }).length === 0 ? (
               <tr>
                 <td colSpan="7" style={{ textAlign: 'center', padding: '60px', color: '#64748b' }}>
-                  No logistics nodes found matching your query.
+                  No logistics nodes found matching your filters.
                 </td>
               </tr>
             ) : (
-              hubs.map(hub => (
+              hubs.filter(hub => {
+                const statusMatch = statusFilter === 'All Status' || hub.status.toLowerCase() === statusFilter.toLowerCase();
+                const typeMatch = typeFilter === 'All Types' || hub.hubType.toLowerCase() === typeFilter.toLowerCase();
+                return statusMatch && typeMatch;
+              }).map(hub => (
                 <tr key={hub.id}>
                   <td className="hub-code-text">{hub.hubCode}</td>
                   <td className="hub-name-text">{hub.name}</td>
@@ -273,10 +278,16 @@ export default function HubsManagement() {
         </div>
         <div className="bento-alert-card">
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-            <span className="urgent-tag">Urgent Alert</span>
-            <h4 style={{ fontSize: '18px', fontWeight: 700 }}>Maintenance Window</h4>
+            <span className="urgent-tag" style={{ background: hubs.some(h => h.status === 'INACTIVE') ? '#fef2f2' : '#f0fdf4', color: hubs.some(h => h.status === 'INACTIVE') ? '#ef4444' : '#16a34a' }}>
+              {hubs.some(h => h.status === 'INACTIVE') ? 'Action Required' : 'Network Stable'}
+            </span>
+            <h4 style={{ fontSize: '18px', fontWeight: 700 }}>
+              {hubs.some(h => h.status === 'INACTIVE') ? 'Maintenance Check' : 'Peak Performance'}
+            </h4>
             <p style={{ fontSize: '13px', color: '#94a3b8', lineHeight: 1.5 }}>
-              Hub-SIN-005 scheduled for structural system upgrade in 4 hours. Rerouting protocols initialized.
+              {hubs.some(h => h.status === 'INACTIVE') 
+                ? 'One or more hubs are currently inactive. Verify connection protocols immediately.' 
+                : 'All logistics nodes are currently operating within optimal parameters.'}
             </p>
           </div>
           <div className="team-avatars">

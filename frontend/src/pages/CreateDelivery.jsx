@@ -100,6 +100,60 @@ export default function CreateDelivery() {
     }
   }, [step, formData.packageDetails.weightKg, formData.pickupAddress.pincode, formData.deliveryAddress.pincode, formData.deliveryAddress.country, formData.type]);
 
+  // Pincode Lookup - Pickup
+  useEffect(() => {
+    const pincode = formData.pickupAddress.pincode;
+    if (pincode && pincode.length === 6) {
+      const fetchAddress = async () => {
+        try {
+          const res = await fetch(`https://api.postalpincode.in/pincode/${pincode}`);
+          const data = await res.json();
+          if (data[0].Status === 'Success') {
+            const postOffice = data[0].PostOffice[0];
+            setFormData(prev => ({
+              ...prev,
+              pickupAddress: {
+                ...prev.pickupAddress,
+                city: postOffice.District,
+                state: postOffice.State
+              }
+            }));
+          }
+        } catch (err) {
+          console.error("Pincode lookup failed", err);
+        }
+      };
+      fetchAddress();
+    }
+  }, [formData.pickupAddress.pincode]);
+
+  // Pincode Lookup - Delivery
+  useEffect(() => {
+    const pincode = formData.deliveryAddress.pincode;
+    if (pincode && pincode.length === 6 && formData.type === 'DOMESTIC') {
+      const fetchAddress = async () => {
+        try {
+          const res = await fetch(`https://api.postalpincode.in/pincode/${pincode}`);
+          const data = await res.json();
+          if (data[0].Status === 'Success') {
+            const postOffice = data[0].PostOffice[0];
+            setFormData(prev => ({
+              ...prev,
+              deliveryAddress: {
+                ...prev.deliveryAddress,
+                city: postOffice.District,
+                state: postOffice.State
+              }
+            }));
+          }
+        } catch (err) {
+          console.error("Pincode lookup failed", err);
+        }
+      };
+      fetchAddress();
+    }
+  }, [formData.deliveryAddress.pincode, formData.type]);
+
   const updateField = (section, field, value, errorKey) => {
     if (section) {
       setFormData({

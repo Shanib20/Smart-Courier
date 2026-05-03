@@ -50,11 +50,12 @@ public class BookingEventListener {
         com.smartcourier.auth.entity.User user = userRepository.findByEmail(email)
                 .orElse(null);
 
-        if (user != null && !user.isEmailNotificationsEnabled()) {
-            System.out.println("Email notifications disabled for user: " + email);
+        if (user != null && !user.isEmailNotificationsEnabled() && !event.isManualReceipt()) {
+            System.out.println("Email notifications disabled for user: " + email + ". Skipping automated mail.");
         } else {
             emailService.sendBookingConfirmationEmail(email, subject, body);
-            System.out.println("Booking confirmation email sent to: " + email);
+            String type = event.isManualReceipt() ? "Manual Receipt" : "Booking Confirmation";
+            System.out.println(type + " email sent to: " + email);
         }
         
         // Save tracking mapping for future notifications

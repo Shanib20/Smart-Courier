@@ -9,16 +9,22 @@ public class BookingCreatedEvent {
     private String receiverName;
     private Double chargeAmount;
     private LocalDateTime estimatedDeliveryDate;
+    private boolean isManualReceipt;
 
     public BookingCreatedEvent() {}
 
     public BookingCreatedEvent(String trackingNumber, String customerEmail, String senderName, String receiverName, Double chargeAmount, LocalDateTime estimatedDeliveryDate) {
+        this(trackingNumber, customerEmail, senderName, receiverName, chargeAmount, estimatedDeliveryDate, false);
+    }
+
+    public BookingCreatedEvent(String trackingNumber, String customerEmail, String senderName, String receiverName, Double chargeAmount, LocalDateTime estimatedDeliveryDate, boolean isManualReceipt) {
         this.trackingNumber = trackingNumber;
         this.customerEmail = customerEmail;
         this.senderName = senderName;
         this.receiverName = receiverName;
         this.chargeAmount = chargeAmount;
         this.estimatedDeliveryDate = estimatedDeliveryDate;
+        this.isManualReceipt = isManualReceipt;
     }
 
     public String getTrackingNumber() { return trackingNumber; }
@@ -33,4 +39,6 @@ public class BookingCreatedEvent {
     public void setChargeAmount(Double chargeAmount) { this.chargeAmount = chargeAmount; }
     public LocalDateTime getEstimatedDeliveryDate() { return estimatedDeliveryDate; }
     public void setEstimatedDeliveryDate(LocalDateTime estimatedDeliveryDate) { this.estimatedDeliveryDate = estimatedDeliveryDate; }
+    public boolean isManualReceipt() { return isManualReceipt; }
+    public void setManualReceipt(boolean manualReceipt) { isManualReceipt = manualReceipt; }
 }

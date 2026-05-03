@@ -28,17 +28,21 @@ public class PricingService {
             return generateQuote(exactMatch.get(), weight, "EXACT_MATCH");
         }
 
-        // 2. Zone Match (first 3 digits)
+        // 2. Zone Match (first 3 digits) - Skip if it looks like an international marker
         if (fromPincode != null && fromPincode.length() >= 3 && toPincode != null && toPincode.length() >= 3) {
-            String fromZone = fromPincode.substring(0, 3);
-            String toZone = toPincode.substring(0, 3);
+            if (fromPincode.startsWith("INT") || toPincode.startsWith("INT")) {
+                // Skip zone matching for international markers to avoid "INT" zone collisions
+            } else {
+                String fromZone = fromPincode.substring(0, 3);
+                String toZone = toPincode.substring(0, 3);
 
-            Optional<PricingRule> zoneMatch = activeRules.stream()
-                    .filter(r -> r.getFromPincodePrefix().equals(fromZone) && r.getToPincodePrefix().equals(toZone))
-                    .findFirst();
+                Optional<PricingRule> zoneMatch = activeRules.stream()
+                        .filter(r -> r.getFromPincodePrefix().equals(fromZone) && r.getToPincodePrefix().equals(toZone))
+                        .findFirst();
 
-            if (zoneMatch.isPresent()) {
-                return generateQuote(zoneMatch.get(), weight, "ZONE_MATCH");
+                if (zoneMatch.isPresent()) {
+                    return generateQuote(zoneMatch.get(), weight, "ZONE_MATCH");
+                }
             }
         }
 
