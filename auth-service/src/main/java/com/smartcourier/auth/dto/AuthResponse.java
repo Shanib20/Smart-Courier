@@ -22,30 +22,36 @@ public class AuthResponse {
     @JsonProperty("requiresPasswordChange")
     private boolean requiresPasswordChange;
 
+    @JsonProperty("profilePhoto")
+    private String profilePhoto;
+
     public AuthResponse(String token, String role,
-                        String name, Long userId) {
+                        String name, Long userId, String profilePhoto) {
         this.token = token;
         this.role = role;
         this.name = name;
         this.userId = userId;
+        this.profilePhoto = profilePhoto;
         this.requiresOtp = false;
         this.requiresPasswordChange = false;
     }
 
-    public AuthResponse(boolean requiresOtp, String role, String name, Long userId) {
+    public AuthResponse(boolean requiresOtp, String role, String name, Long userId, String profilePhoto) {
         this.requiresOtp = requiresOtp;
         this.role = role;
         this.name = name;
         this.userId = userId;
+        this.profilePhoto = profilePhoto;
         this.requiresPasswordChange = false;
     }
 
-    public AuthResponse(boolean requiresOtp, boolean requiresPasswordChange, String role, String name, Long userId) {
+    public AuthResponse(boolean requiresOtp, boolean requiresPasswordChange, String role, String name, Long userId, String profilePhoto) {
         this.requiresOtp = requiresOtp;
         this.requiresPasswordChange = requiresPasswordChange;
         this.role = role;
         this.name = name;
         this.userId = userId;
+        this.profilePhoto = profilePhoto;
     }
 
     public String getToken() { return token; }
@@ -54,4 +60,5 @@ public class AuthResponse {
     public Long getUserId()  { return userId; }
     public boolean isRequiresOtp() { return requiresOtp; }
     public boolean isRequiresPasswordChange() { return requiresPasswordChange; }
-}
+    public String getProfilePhoto() { return profilePhoto; }
+}

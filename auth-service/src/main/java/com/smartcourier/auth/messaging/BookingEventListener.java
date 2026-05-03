@@ -24,6 +24,9 @@ public class BookingEventListener {
     private com.smartcourier.auth.repository.UserDeliveryRepository userDeliveryRepository;
 
     @Autowired
+    private com.smartcourier.auth.repository.UserRepository userRepository;
+
+    @Autowired
     private ObjectMapper objectMapper;
 
     @RabbitListener(queues = "booking_queue")
@@ -43,8 +46,16 @@ public class BookingEventListener {
             event.getEstimatedDeliveryDate() != null ? event.getEstimatedDeliveryDate().toLocalDate().toString() : "TBD"
         );
         
-        emailService.sendBookingConfirmationEmail(event.getCustomerEmail(), subject, body);
-        System.out.println("Booking confirmation email sent to: " + event.getCustomerEmail());
+        String email = event.getCustomerEmail().toLowerCase();
+        com.smartcourier.auth.entity.User user = userRepository.findByEmail(email)
+                .orElse(null);
+
+        if (user != null && !user.isEmailNotificationsEnabled()) {
+            System.out.println("Email notifications disabled for user: " + email);
+        } else {
+            emailService.sendBookingConfirmationEmail(email, subject, body);
+            System.out.println("Booking confirmation email sent to: " + email);
+        }
         
         // Save tracking mapping for future notifications
         if (userDeliveryRepository.findByTrackingNumber(event.getTrackingNumber()).isEmpty()) {

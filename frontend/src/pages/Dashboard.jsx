@@ -1,27 +1,35 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '../hooks/useAuth';
 import { deliveryApi } from '../api/deliveryApi';
+import { useToast } from '../hooks/useToast';
 import { 
   Package, 
   CheckCircle, 
-  Clock, 
-  PlusCircle, 
-  ChevronRight, 
   TrendingUp,
   CreditCard,
-  History
+  Truck,
+  Eye,
+  LocateFixed,
+  Plus,
+  Warehouse,
+  PlaneTakeoff,
+  ArrowRight,
+  ShieldCheck
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import StatCard from '../components/StatCard';
 import './Dashboard.css';
 
 export default function Dashboard() {
   const { user } = useAuth();
+  const { addToast } = useToast();
   const [stats, setStats] = useState({
     activeCount: 0,
     deliveredCount: 0,
-    totalSpent: 0
+    totalSpent: 0,
+    totalCount: 0
   });
+  const [recentDeliveries, setRecentDeliveries] = useState([]);
+  const [activeLocations, setActiveLocations] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -30,15 +38,25 @@ export default function Dashboard() {
         const response = await deliveryApi.getMyDeliveries(0, 100);
         const all = response.content || [];
         
-        const active = all.filter(d => ['BOOKED', 'PICKED_UP', 'IN_TRANSIT', 'OUT_FOR_DELIVERY'].includes(d.status)).length;
+        const active = all.filter(d => ['BOOKED', 'PICKED_UP', 'IN_TRANSIT', 'OUT_FOR_DELIVERY'].includes(d.status));
         const delivered = all.filter(d => d.status === 'DELIVERED').length;
-        const spent = all.reduce((acc, curr) => acc + (curr.chargeAmount || 0), 0);
+        const spent = all
+          .filter(d => d.status !== 'CANCELLED')
+          .reduce((acc, curr) => acc + (curr.chargeAmount || 0), 0);
 
         setStats({
-          activeCount: active,
+          activeCount: active.length,
           deliveredCount: delivered,
-          totalSpent: spent
+          totalSpent: spent,
+          totalCount: all.length
         });
+        
+        setRecentDeliveries(all.slice(0, 5));
+
+        // Extract unique destination cities for the map
+        const cities = [...new Set(active.map(d => d.destinationAddress?.city).filter(Boolean))].slice(0, 3);
+        setActiveLocations(cities);
+
       } catch (err) {
         console.error("Failed to load dashboard stats", err);
       } finally {
@@ -54,80 +72,183 @@ export default function Dashboard() {
     if (hour < 17) return "Good Afternoon";
     return "Good Evening";
   };
+  
+  const formatDate = (dateString) => {
+    if (!dateString) return 'N/A';
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  };
 
   return (
     <div className="dashboard-container slide-up">
-      <div className="dashboard-header">
-        <div className="greeting-section">
-          <h1>{getGreeting()}, {user?.name.split(' ')[0]}! 👋</h1>
-          <p className="subtitle">Welcome back. You have {stats.activeCount} active shipments in transit.</p>
+      {/* Greeting & Quick Actions */}
+      <div className="dashboard-header-row">
+        <div className="dashboard-greeting">
+          <h2>{getGreeting()}, {user?.name.split(' ')[0]}</h2>
+          <p>Here is what is happening with your deliveries today.</p>
         </div>
-        <Link to="/deliveries/new" className="btn btn-primary btn-lg">
-          <PlusCircle size={20} /> Book New Delivery
-        </Link>
+        <div className="dashboard-actions">
+          <Link to="/track" className="btn-secondary">
+            <LocateFixed size={18} />
+            Track a Parcel
+          </Link>
+          <Link to="/deliveries/new" className="btn-primary">
+            <Plus size={18} />
+            Book New Delivery
+          </Link>
+        </div>
       </div>
 
-      <div className="stats-grid">
-        <StatCard 
-          title="Active Deliveries" 
-          value={loading ? "..." : stats.activeCount} 
-          icon={Package}
-          trend="Real-time tracking"
-        />
-        <StatCard 
-          title="Delivered" 
-          value={loading ? "..." : stats.deliveredCount} 
-          icon={CheckCircle}
-          trend="Successfully completed"
-        />
-        <StatCard 
-          title="Total Logistics Spend" 
-          value={loading ? "..." : `₹${stats.totalSpent.toLocaleString()}`} 
-          icon={CreditCard}
-          trend="Lifetime spending"
-        />
+      {/* Stats Grid */}
+      <div className="dashboard-stats-grid">
+        <div className="dashboard-stat-card">
+          <div className="stat-header">
+            <p>Total Deliveries</p>
+            <Package size={20} className="stat-icon" />
+          </div>
+          <div>
+            <p className="stat-value">{loading ? "..." : stats.totalCount}</p>
+            <p className="stat-trend positive">
+              <TrendingUp size={14} />
+              Lifetime shipments
+            </p>
+          </div>
+        </div>
+        
+        <div className="dashboard-stat-card">
+          <div className="stat-header">
+            <p>In Transit</p>
+            <Truck size={20} className="stat-icon blue" />
+          </div>
+          <div>
+            <p className="stat-value">{loading ? "..." : stats.activeCount}</p>
+            <p className="stat-trend">Active shipments currently</p>
+          </div>
+        </div>
+        
+        <div className="dashboard-stat-card">
+          <div className="stat-header">
+            <p>Completed</p>
+            <CheckCircle size={20} className="stat-icon emerald" />
+          </div>
+          <div>
+            <p className="stat-value">{loading ? "..." : stats.deliveredCount}</p>
+            <p className="stat-trend">Successfully delivered</p>
+          </div>
+        </div>
+        
+        <div className="dashboard-stat-card">
+          <div className="stat-header">
+            <p>Spendings</p>
+            <CreditCard size={20} className="stat-icon" />
+          </div>
+          <div>
+            <p className="stat-value">{loading ? "..." : `₹${stats.totalSpent.toLocaleString()}`}</p>
+            <p className="stat-trend">Total lifetime spending</p>
+          </div>
+        </div>
       </div>
 
-      <div className="dashboard-sections">
-        <div className="section-main">
-          <div className="section-card">
-            <div className="card-header">
-              <h3>Quick Actions</h3>
-            </div>
-            <div className="quick-actions-grid">
-              <Link to="/deliveries" className="action-card">
-                <div className="action-icon purple"><History size={24}/></div>
-                <div className="action-text">
-                  <h4>Delivery History</h4>
-                  <p>View receipts and invoices</p>
-                </div>
-                <ChevronRight size={18} />
-              </Link>
-              <Link to="/track" className="action-card">
-                <div className="action-icon blue"><Clock size={24}/></div>
-                <div className="action-text">
-                  <h4>Track Shipment</h4>
-                  <p>Check status in real-time</p>
-                </div>
-                <ChevronRight size={18} />
-              </Link>
-            </div>
+      {/* Content Area: Asymmetric Layout */}
+      <div className="dashboard-content-area">
+        {/* Recent Activity Table (2/3 width) */}
+        <div className="dashboard-table-card">
+          <div className="table-header-box">
+            <h3>Recent Activity</h3>
+            <Link to="/deliveries" className="table-view-all">View All</Link>
+          </div>
+          <div className="table-container">
+            <table className="dashboard-table">
+              <thead>
+                <tr>
+                  <th>Tracking ID</th>
+                  <th>Date</th>
+                  <th>Recipient</th>
+                  <th>Status</th>
+                  <th style={{ textAlign: 'right' }}>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {loading ? (
+                  <tr><td colSpan="5" style={{ textAlign: 'center', color: '#64748b' }}>Loading deliveries...</td></tr>
+                ) : recentDeliveries.length === 0 ? (
+                  <tr><td colSpan="5" style={{ textAlign: 'center', color: '#64748b' }}>No recent deliveries found.</td></tr>
+                ) : (
+                  recentDeliveries.map(delivery => (
+                    <tr key={delivery.id}>
+                      <td className="td-id">{delivery.trackingId || `SC-${delivery.id}`}</td>
+                      <td className="td-date">{formatDate(delivery.createdAt)}</td>
+                      <td>
+                        <span className="td-recipient-name">{delivery.recipientName}</span>
+                        <span className="td-recipient-loc">{delivery.destinationAddress?.city || 'Unknown City'}</span>
+                      </td>
+                      <td>
+                        <span className={`status-badge status-${delivery.status.toLowerCase()}`}>
+                          {delivery.status.replace(/_/g, ' ')}
+                        </span>
+                      </td>
+                      <td style={{ textAlign: 'right' }}>
+                        <Link to={`/deliveries/${delivery.id}`} className="action-btn">
+                          <Eye size={18} />
+                        </Link>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
           </div>
         </div>
 
-        <div className="section-side">
+        {/* Live Tracking Map / Promo (1/3 width) */}
+        <div className="dashboard-side-col">
+          <div className="map-card">
+            <div className="map-header">
+              <h3>Global Coverage</h3>
+              <p>Real-time terminal operations</p>
+            </div>
+            <div className="map-visual">
+              <div className="map-gradient"></div>
+              <img 
+                src="https://images.unsplash.com/photo-1524661135-423995f22d0b?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80" 
+                alt="Map View" 
+              />
+              <div className="map-ping">
+                <div className="ping-ring"></div>
+                <div className="ping-dot"></div>
+              </div>
+            </div>
+            <div className="map-locations">
+              {activeLocations.length === 0 ? (
+                <p style={{ color: '#64748b', fontSize: '13px', textAlign: 'center', margin: '20px 0' }}>No active deliveries on map.</p>
+              ) : (
+                activeLocations.map((city, index) => (
+                  <div className="map-loc-item" key={index}>
+                    <div className="map-loc-icon">
+                      {index === 0 ? <Warehouse size={20} /> : <PlaneTakeoff size={20} />}
+                    </div>
+                    <div className="map-loc-info">
+                      <p className="loc-name">{city} Terminal</p>
+                      <p className="loc-status">Status: Active Routing</p>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+
           <div className="promo-card">
             <div className="promo-content">
-              <TrendingUp size={32} className="promo-icon" />
-              <h4>Next-Day Delivery</h4>
-              <p>Upgrade to Express for guaranteed delivery by tomorrow morning.</p>
+              <h4>Freight Insurance</h4>
+              <p>Protect your high-value shipments with our new automated cargo insurance program. Instant claims and global coverage.</p>
               <button 
-                className="coming-soon-btn" 
-                onClick={() => addToast('Express Next-Day delivery is coming soon to your city!', 'info')}
+                className="promo-link-btn"
+                onClick={() => addToast('Freight Insurance feature is coming soon!', 'info')}
               >
-                Coming Soon
+                LEARN MORE <ArrowRight size={14} />
               </button>
             </div>
+            <ShieldCheck size={120} className="promo-bg-icon" />
           </div>
         </div>
       </div>

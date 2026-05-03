@@ -63,5 +63,9 @@ export const deliveryApi = {
   deleteHub: async (id) => {
     const response = await axiosClient.delete(`/gateway/deliveries/hubs/${id}`);
     return response.data;
+  },
+  updateHub: async (id, payload) => {
+    const response = await axiosClient.put(`/gateway/deliveries/hubs/${id}`, payload);
+    return response.data;
   }
 };

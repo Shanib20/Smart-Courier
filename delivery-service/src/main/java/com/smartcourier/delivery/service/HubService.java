@@ -73,4 +73,19 @@ public class HubService {
         }
         hubRepository.delete(hub);
     }
+
+    @Transactional
+    public Hub updateHub(Long id, Hub updates) {
+        Hub hub = hubRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Hub not found"));
+
+        if (updates.getName() != null) hub.setName(updates.getName());
+        if (updates.getHubType() != null) hub.setHubType(updates.getHubType());
+        if (updates.getCity() != null) hub.setCity(updates.getCity());
+        if (updates.getState() != null) hub.setState(updates.getState());
+        if (updates.getAddress() != null) hub.setAddress(updates.getAddress());
+        if (updates.getPincode() != null) hub.setPincode(updates.getPincode());
+
+        return hubRepository.save(hub);
+    }
 }

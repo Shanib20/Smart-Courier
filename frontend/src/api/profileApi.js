@@ -22,6 +22,10 @@ export const profileApi = {
     const response = await axiosClient.put(`${BASE_URL}/2fa?enabled=${enabled}`);
     return response.data;
   },
+  updateNotifications: async (settings) => {
+    const response = await axiosClient.put(`${BASE_URL}/notifications`, settings);
+    return response.data;
+  },
 
   updateProfilePhoto: async (photoBase64) => {
     const response = await axiosClient.post(`${BASE_URL}/photo`, { photoBase64 });

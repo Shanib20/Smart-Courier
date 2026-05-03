@@ -38,20 +38,27 @@ export default function Sidebar({ isOpen, closeSidebar }) {
   const links = isAdmin ? adminLinks : customerLinks;
 
   return (
-    <aside className={`app-sidebar ${isOpen ? 'open' : ''}`}>
-      <div className="sidebar-header mobile-only">
-        <span className="sidebar-title">Menu</span>
-        <button className="btn-icon" onClick={closeSidebar}>
-          <X size={24} />
+    <aside className={`app-sidebar ${isOpen ? 'open' : 'closed'}`}>
+      <div className="sidebar-brand-container">
+        <div className="sidebar-brand">
+          <h1 className="sidebar-logo-text">SmartCourier</h1>
+          <p className="sidebar-subtitle">Logistics Command</p>
+        </div>
+        <button className="btn-icon mobile-only" onClick={closeSidebar}>
+          <X size={24} color="white" />
         </button>
       </div>
+      
       <nav className="sidebar-nav">
         {links.map((link) => (
           <NavLink 
             key={link.to} 
             to={link.to}
+            end={link.to === '/deliveries' || link.to === '/admin/deliveries'}
             className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`}
-            onClick={closeSidebar}
+            onClick={() => {
+              if (window.innerWidth <= 768) closeSidebar();
+            }}
           >
             {link.icon}
             <span>{link.label}</span>

@@ -57,9 +57,24 @@ public class User {
     private AccountStatus status = AccountStatus.ACTIVE;
 
     private LocalDateTime createdAt = LocalDateTime.now();
+    
+    @Column(name = "email_notifications_enabled", nullable = false)
+    private boolean emailNotificationsEnabled = true;
+
+    @Column(name = "sms_notifications_enabled", nullable = false)
+    private boolean smsNotificationsEnabled = false;
+
+    @Column(name = "browser_notifications_enabled", nullable = false)
+    private boolean browserNotificationsEnabled = true;
 
     public enum Role {
         CUSTOMER, ADMIN
+    }
+
+    @PrePersist
+    protected void onCreate() {
+        if (createdAt == null) createdAt = LocalDateTime.now();
+        if (status == null) status = AccountStatus.ACTIVE;
     }
 
 	public Long getId() {
@@ -149,4 +164,11 @@ public class User {
     public void setCreatedAt(LocalDateTime createdAt) {
         this.createdAt = createdAt;
     }
+
+    public boolean isEmailNotificationsEnabled() { return emailNotificationsEnabled; }
+    public void setEmailNotificationsEnabled(boolean emailNotificationsEnabled) { this.emailNotificationsEnabled = emailNotificationsEnabled; }
+    public boolean isSmsNotificationsEnabled() { return smsNotificationsEnabled; }
+    public void setSmsNotificationsEnabled(boolean smsNotificationsEnabled) { this.smsNotificationsEnabled = smsNotificationsEnabled; }
+    public boolean isBrowserNotificationsEnabled() { return browserNotificationsEnabled; }
+    public void setBrowserNotificationsEnabled(boolean browserNotificationsEnabled) { this.browserNotificationsEnabled = browserNotificationsEnabled; }
 }

@@ -24,4 +24,7 @@ public interface DeliveryClient {
             @RequestParam("status") String status,
             @RequestHeader("X-User-Role") String role,
             @RequestHeader("X-User-Email") String email);
+
+    @GetMapping("/analytics/summary")
+    Map<String, Object> getAnalyticsSummary(@RequestParam("range") int range);
 }

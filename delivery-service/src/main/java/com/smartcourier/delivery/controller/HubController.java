@@ -52,6 +52,16 @@ public class HubController {
         return ResponseEntity.ok(hubService.toggleStatus(id));
     }
 
+    @PutMapping("/{id}")
+    public ResponseEntity<?> update(@PathVariable Long id, @RequestBody Hub hub) {
+        try {
+            Hub updated = hubService.updateHub(id, hub);
+            return ResponseEntity.ok(updated);
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
     @DeleteMapping("/{id}")
     public ResponseEntity<?> delete(@PathVariable Long id) {
         try {

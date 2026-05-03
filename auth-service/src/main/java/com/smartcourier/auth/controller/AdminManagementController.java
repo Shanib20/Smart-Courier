@@ -70,7 +70,7 @@ public class AdminManagementController {
 
         userRepository.save(admin);
 
-        emailService.sendAdminWelcomeEmail(admin.getEmail(), tempPassword);
+        emailService.sendAdminWelcomeEmail(admin.getEmail(), admin.getName(), tempPassword);
 
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(Map.of("message", "Admin created successfully. Welcome email sent."));

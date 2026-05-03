@@ -1,11 +1,13 @@
 import { useState, useEffect } from 'react';
 import { deliveryApi } from '../api/deliveryApi';
 import { useToast } from '../hooks/useToast';
-import { Edit2, Eye, Search, Truck, Loader2 } from 'lucide-react';
+import { Edit2, Eye, Search, Truck, Loader2, ChevronLeft, ChevronRight, RefreshCw } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import DeliveryDetailModal from '../components/DeliveryDetailModal';
 import EditDeliveryModal from '../components/EditDeliveryModal';
 import StatusUpdateModal from '../components/StatusUpdateModal';
+import usePageTitle from '../hooks/usePageTitle';
+import Pagination from '../components/Pagination';
 import './AdminDeliveries.css';
 
 export default function AdminDeliveries() {
@@ -16,8 +18,10 @@ export default function AdminDeliveries() {
   const [searchTerm, setSearchTerm] = useState('');
   const { addToast } = useToast();
   const navigate = useNavigate();
+  usePageTitle('All Deliveries');
+  const [totalElements, setTotalElements] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
 
-  // Modal States
   const [selectedDelivery, setSelectedDelivery] = useState(null);
   const [showDetail, setShowDetail] = useState(false);
   const [showEdit, setShowEdit] = useState(false);
@@ -28,21 +32,16 @@ export default function AdminDeliveries() {
     const delayDebounceFn = setTimeout(() => {
       fetchAll(0, true, searchTerm);
     }, 500);
-
     return () => clearTimeout(delayDebounceFn);
   }, [searchTerm]);
 
   const fetchAll = async (pageNum = 0, isNew = false, query = '') => {
     try {
-      if (isNew && pageNum === 0) setLoading(true);
+      setLoading(true);
       const data = await deliveryApi.getAllDeliveries(pageNum, 10, query);
-      const list = data.content || [];
-      if (isNew) {
-        setDeliveries(list);
-      } else {
-        setDeliveries(prev => [...prev, ...list]);
-      }
-      setHasMore(!data.last);
+      setDeliveries(data.content || []);
+      setTotalElements(data.totalElements || 0);
+      setTotalPages(data.totalPages || 0);
       setPage(pageNum);
     } catch (err) {
       addToast(err.response?.data?.message || 'Error fetching deliveries', 'error');
@@ -51,9 +50,7 @@ export default function AdminDeliveries() {
     }
   };
 
-  const handleLoadMore = () => {
-    fetchAll(page + 1, false, searchTerm);
-  };
+  const handleLoadMore = () => fetchAll(page + 1, false, searchTerm);
 
   const handleStatusChangeAttempt = (delivery, nextStatus) => {
     setSelectedDelivery(delivery);
@@ -65,7 +62,7 @@ export default function AdminDeliveries() {
     try {
       await deliveryApi.updateDeliveryStatus(id, statusData);
       addToast(`Status updated to ${statusData.status}`, 'success');
-      fetchAll(); // Refresh list
+      fetchAll(0, true, searchTerm);
     } catch (err) {
       addToast(err.response?.data?.message || 'Update failed', 'error');
       throw err;
@@ -76,65 +73,91 @@ export default function AdminDeliveries() {
     try {
       await deliveryApi.updateDelivery(id, payload);
       addToast('Delivery updated successfully', 'success');
-      fetchAll();
+      fetchAll(0, true, searchTerm);
     } catch (err) {
       addToast(err.response?.data?.message || 'Update failed', 'error');
       throw err;
     }
   };
 
-
-
   return (
-    <div className="admin-deliveries">
-      <div className="page-header" style={{display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end'}}>
-        <div>
-          <h1>Global Delivery Management</h1>
-          <p className="subtitle">Monitor and update all system deliveries.</p>
+    <div className="admin-deliveries-page">
+      <div className="admin-deliveries-max-width">
+        
+        <div className="deliveries-header">
+          <div>
+            <h1>Global Deliveries</h1>
+            <p className="subtitle">Real-time monitoring and lifecycle management.</p>
+          </div>
+          <div style={{ display: 'flex', gap: '12px' }}>
+             <button className="btn-premium-ghost" onClick={() => fetchAll(0, true, searchTerm)}>
+               <RefreshCw size={16} className={loading ? 'animate-spin' : ''} />
+               Refresh
+             </button>
+          </div>
         </div>
-        <div className="search-bar">
-          <Search size={18} className="search-icon" />
-          <input 
-            type="text" 
-            placeholder="Search tracking or name..." 
-            className="input-field"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
-        </div>
-      </div>
 
-      <div className="table-container">
-        {loading && page === 0 ? (
-          <div className="loading-state"><Loader2 className="spinner" /> Loading deliveries...</div>
-        ) : (
-          <>
+        <div className="deliveries-card">
+          <div className="card-top-bar">
+            <h3>Recent Shipments</h3>
+            <div className="search-input-wrap">
+              <Search size={16} className="search-icon" />
+              <input 
+                type="text" 
+                placeholder="Search tracking #, sender or receiver..." 
+                className="admin-search-field"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+            </div>
+          </div>
+
+          <div className="admin-table-container">
             <table className="admin-table">
               <thead>
                 <tr>
-                  <th>Tracking #</th>
+                  <th>Tracking ID</th>
                   <th>Sender</th>
                   <th>Receiver</th>
                   <th>Service</th>
                   <th>Status</th>
-                  <th>Actions</th>
+                  <th style={{ textAlign: 'right' }}>Actions</th>
                 </tr>
               </thead>
               <tbody>
-                {deliveries.length === 0 ? (
+                {loading && page === 0 ? (
                   <tr>
-                    <td colSpan="6" className="empty-state">No deliveries found matching your search.</td>
+                    <td colSpan="6" style={{ textAlign: 'center', padding: '100px' }}>
+                      <Loader2 className="animate-spin" size={32} style={{ color: '#0051d5' }} />
+                    </td>
+                  </tr>
+                ) : deliveries.length === 0 ? (
+                  <tr>
+                    <td colSpan="6" style={{ textAlign: 'center', padding: '100px', color: '#64748b' }}>
+                      No deliveries found matching your query.
+                    </td>
                   </tr>
                 ) : (
                   deliveries.map(d => (
                     <tr key={d.id}>
-                      <td className="tracking-col">{d.trackingNumber}</td>
-                      <td>{d.senderName}</td>
-                      <td>{d.receiverName}</td>
-                      <td>{d.serviceType}</td>
+                      <td><span className="tracking-id">#{d.trackingNumber}</span></td>
+                      <td>
+                        <div style={{ fontWeight: 600 }}>{d.senderName}</div>
+                        <div style={{ fontSize: '11px', color: '#64748b' }}>{d.senderPhone}</div>
+                      </td>
+                      <td>
+                        <div style={{ fontWeight: 600 }}>{d.receiverName}</div>
+                        <div style={{ fontSize: '11px', color: '#64748b' }}>{d.receiverPhone}</div>
+                      </td>
+                      <td>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px' }}>
+                          <Truck size={14} style={{ color: '#0051d5' }} />
+                          {d.serviceType}
+                        </div>
+                      </td>
                       <td>
                         <select 
-                          className={`status-select ${d.status.toLowerCase()}`}
+                          className={`status-pill-select ${d.status.toLowerCase()}`}
                           value={d.status}
                           onChange={(e) => handleStatusChangeAttempt(d, e.target.value)}
                         >
@@ -147,19 +170,18 @@ export default function AdminDeliveries() {
                           <option value="CANCELLED" disabled>CANCELLED</option>
                         </select>
                       </td>
-                      <td>
-                        <div className="action-buttons">
+                      <td style={{ textAlign: 'right' }}>
+                        <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
                           <button 
-                            className="btn-icon" 
-                            title="View Details"
+                            className="btn-icon-premium" 
+                            title="View Lifecycle"
                             onClick={() => { setSelectedDelivery(d); setShowDetail(true); }}
                           >
                             <Eye size={18} />
                           </button>
-
                           <button 
-                            className="btn-icon" 
-                            title="Edit"
+                            className="btn-icon-premium" 
+                            title="Edit Record"
                             disabled={d.status === 'DELIVERED' || d.status === 'CANCELLED'}
                             onClick={() => { setSelectedDelivery(d); setShowEdit(true); }}
                           >
@@ -172,45 +194,40 @@ export default function AdminDeliveries() {
                 )}
               </tbody>
             </table>
-            {hasMore && (
-              <div style={{ textAlign: 'center', padding: '1.5rem' }}>
-                <button 
-                  className="btn btn-outline" 
-                  onClick={handleLoadMore}
-                  disabled={loading}
-                >
-                  {loading ? 'Loading...' : 'Load More'}
-                </button>
-              </div>
-            )}
-          </>
-        )}
+          </div>
+
+        <Pagination 
+          currentPage={page}
+          totalPages={totalPages}
+          totalElements={totalElements}
+          onPageChange={(p) => fetchAll(p, true, searchTerm)}
+        />
       </div>
 
-      {/* Modals */}
-      {showDetail && selectedDelivery && (
-        <DeliveryDetailModal 
-          delivery={selectedDelivery} 
-          onClose={() => setShowDetail(false)} 
-        />
-      )}
+        {showDetail && selectedDelivery && (
+          <DeliveryDetailModal 
+            delivery={selectedDelivery} 
+            onClose={() => setShowDetail(false)} 
+          />
+        )}
 
-      {showEdit && selectedDelivery && (
-        <EditDeliveryModal 
-          delivery={selectedDelivery} 
-          onSave={handleSaveEdit}
-          onClose={() => setShowEdit(false)} 
-        />
-      )}
+        {showEdit && selectedDelivery && (
+          <EditDeliveryModal 
+            delivery={selectedDelivery} 
+            onSave={handleSaveEdit}
+            onClose={() => setShowEdit(false)} 
+          />
+        )}
 
-      {showStatusUpdate && selectedDelivery && (
-        <StatusUpdateModal 
-          delivery={selectedDelivery}
-          nextStatus={pendingStatus}
-          onConfirm={confirmStatusUpdate}
-          onClose={() => setShowStatusUpdate(false)}
-        />
-      )}
+        {showStatusUpdate && selectedDelivery && (
+          <StatusUpdateModal 
+            delivery={selectedDelivery}
+            nextStatus={pendingStatus}
+            onConfirm={confirmStatusUpdate}
+            onClose={() => setShowStatusUpdate(false)}
+          />
+        )}
+      </div>
     </div>
   );
 }

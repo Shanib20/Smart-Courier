@@ -47,6 +47,24 @@ public class PricingService {
         BigDecimal base = new BigDecimal("100.00");
         BigDecimal ratePerKg = new BigDecimal("50.00");
         
+        // International pricing logic based on markers
+        if ("INT-USA".equals(toPincode)) {
+            base = new BigDecimal("2500.00");
+            ratePerKg = new BigDecimal("800.00");
+        } else if ("INT-UK".equals(toPincode)) {
+            base = new BigDecimal("2200.00");
+            ratePerKg = new BigDecimal("750.00");
+        } else if ("INT-CAN".equals(toPincode)) {
+            base = new BigDecimal("2400.00");
+            ratePerKg = new BigDecimal("780.00");
+        } else if ("INT-UAE".equals(toPincode)) {
+            base = new BigDecimal("1500.00");
+            ratePerKg = new BigDecimal("600.00");
+        } else if ("INT-SA".equals(toPincode) || "999999".equals(toPincode)) {
+            base = new BigDecimal("1100.00");
+            ratePerKg = new BigDecimal("550.00");
+        }
+        
         BigDecimal extraWeight = weight.subtract(BigDecimal.ONE);
         if (extraWeight.compareTo(BigDecimal.ZERO) < 0) {
             extraWeight = BigDecimal.ZERO;

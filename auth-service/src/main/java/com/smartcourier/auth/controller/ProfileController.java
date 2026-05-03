@@ -49,6 +49,9 @@ public class ProfileController {
         response.setVerified(user.isVerified());
         response.setTwoFactorEnabled(user.isTwoFactorEnabled());
         response.setProfilePhoto(user.getProfilePhoto());
+        response.setEmailNotificationsEnabled(user.isEmailNotificationsEnabled());
+        response.setSmsNotificationsEnabled(user.isSmsNotificationsEnabled());
+        response.setBrowserNotificationsEnabled(user.isBrowserNotificationsEnabled());
 
         List<AddressDto> addressDtos = addresses.stream().map(a -> {
             AddressDto dto = new AddressDto();
@@ -104,6 +107,21 @@ public class ProfileController {
         user.setTwoFactorEnabled(enabled);
         userRepository.save(user);
         return ResponseEntity.ok(Map.of("message", "2FA " + (enabled ? "enabled" : "disabled") + " successfully"));
+    }
+
+    @PutMapping("/notifications")
+    public ResponseEntity<?> updateNotifications(
+            @RequestHeader("X-User-Email") String email,
+            @RequestBody Map<String, Boolean> request) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        
+        if (request.containsKey("email")) user.setEmailNotificationsEnabled(request.get("email"));
+        if (request.containsKey("sms")) user.setSmsNotificationsEnabled(request.get("sms"));
+        if (request.containsKey("browser")) user.setBrowserNotificationsEnabled(request.get("browser"));
+        
+        userRepository.save(user);
+        return ResponseEntity.ok(Map.of("message", "Notification settings updated successfully"));
     }
 
     @PostMapping("/photo")

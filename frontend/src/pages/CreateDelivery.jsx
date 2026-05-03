@@ -11,11 +11,15 @@ import {
   Globe,
   Info,
   Calendar,
-  IndianRupee,
   Send,
   Loader2,
-  UserCheck
+  UserCheck,
+  ShieldCheck,
+  Clock,
+  ArrowRight
 } from 'lucide-react';
+import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
 import { deliveryApi } from '../api/deliveryApi';
 import { profileApi } from '../api/profileApi';
 import { useToast } from '../hooks/useToast';
@@ -29,12 +33,15 @@ const STEPS = [
   { id: 4, title: 'Review', icon: CheckCircle }
 ];
 
-const COUNTRIES = [
-  "United States", "United Kingdom", "Canada", "United Arab Emirates", "Australia", 
-  "Germany", "France", "Singapore", "Japan", "China", "Brazil", "South Africa", 
-  "Saudi Arabia", "Qatar", "Kuwait", "Oman", "Italy", "Spain", "Netherlands", 
-  "Switzerland", "Malaysia", "Thailand", "New Zealand", "Ireland"
-].sort();
+const COUNTRY_MARKERS = {
+  "United States": "INT-USA",
+  "United Kingdom": "INT-UK",
+  "Canada": "INT-CAN",
+  "United Arab Emirates": "INT-UAE",
+  "South Africa": "INT-SA"
+};
+
+const COUNTRIES = Object.keys(COUNTRY_MARKERS).sort();
 
 const PHONE_REGEX = /^[6-9]\d{9}$/;
 
@@ -81,16 +88,9 @@ export default function CreateDelivery() {
         try {
           const res = await deliveryApi.getQuote(
             formData.pickupAddress.pincode,
-            formData.type === 'INTERNATIONAL' ? '999999' : formData.deliveryAddress.pincode,
+            formData.type === 'INTERNATIONAL' ? (COUNTRY_MARKERS[formData.deliveryAddress.country] || '999999') : formData.deliveryAddress.pincode,
             formData.packageDetails.weightKg
           );
-          // Adjust for international pricing
-          if (formData.type === 'INTERNATIONAL') {
-            res.totalAmount = 1100 + (formData.packageDetails.weightKg * 550);
-          } else {
-            // Ensure domestic also matches the breakdown
-            res.totalAmount = 100 + (formData.packageDetails.weightKg * 50);
-          }
           setQuote(res);
         } catch (err) {
           console.error("Pricing error", err);
@@ -99,6 +99,39 @@ export default function CreateDelivery() {
       fetchQuote();
     }
   }, [step, formData.packageDetails.weightKg, formData.pickupAddress.pincode, formData.deliveryAddress.pincode, formData.deliveryAddress.country, formData.type]);
+
+  const updateField = (section, field, value, errorKey) => {
+    if (section) {
+      setFormData({
+        ...formData,
+        [section]: { ...formData[section], [field]: value }
+      });
+    } else {
+      setFormData({ ...formData, [field]: value });
+    }
+    
+    if (errorKey) {
+      const isEmpty = !value || (typeof value === 'string' && value.trim() === '');
+      if (isEmpty) {
+        let msg = "This field is required";
+        if (field.toLowerCase().includes('name')) msg = field.toLowerCase().includes('sender') ? "Sender name is required" : "Receiver name is required";
+        if (field.toLowerCase().includes('phone')) msg = "Enter valid 10-digit Indian number";
+        if (field.toLowerCase().includes('street')) msg = "Street address is required";
+        if (field.toLowerCase().includes('pincode')) msg = "Pincode required";
+        if (field.toLowerCase().includes('country')) msg = "Country required";
+        if (field.toLowerCase().includes('weight')) msg = "Enter a valid weight";
+        if (field.toLowerCase().includes('time')) msg = "Please select a pickup time";
+        
+        setErrors(prev => ({ ...prev, [errorKey]: msg }));
+      } else {
+        setErrors(prev => {
+          const newErrors = { ...prev };
+          delete newErrors[errorKey];
+          return newErrors;
+        });
+      }
+    }
+  };
 
   const handleUseDefault = (e) => {
     const checked = e.target.checked;
@@ -116,6 +149,7 @@ export default function CreateDelivery() {
           country: 'India'
         }
       });
+      setErrors({});
     } else {
       setFormData({
         ...formData,
@@ -130,7 +164,6 @@ export default function CreateDelivery() {
     let newErrors = {};
     
     if (step === 2) {
-      // Step 2: Contact & Address Validation
       if (!formData.senderName.trim()) newErrors.senderName = "Sender name is required";
       if (!PHONE_REGEX.test(formData.senderPhone)) newErrors.senderPhone = "Enter valid 10-digit Indian number";
       if (!formData.pickupAddress.street.trim()) newErrors.pickupStreet = "Street address is required";
@@ -148,7 +181,6 @@ export default function CreateDelivery() {
     }
 
     if (step === 3) {
-      // Step 3: Package Validation
       const weight = parseFloat(formData.packageDetails.weightKg);
       if (!weight || weight <= 0 || isNaN(weight)) {
         newErrors.weight = "Enter a valid weight greater than 0";
@@ -177,6 +209,10 @@ export default function CreateDelivery() {
       const payload = {
         ...formData,
         serviceType: formData.type,
+        deliveryAddress: {
+          ...formData.deliveryAddress,
+          pincode: formData.type === 'INTERNATIONAL' ? (COUNTRY_MARKERS[formData.deliveryAddress.country] || '999999') : formData.deliveryAddress.pincode
+        },
         scheduledPickupTime: formData.scheduledPickupTime || new Date().toISOString()
       };
       await deliveryApi.createDelivery(payload);
@@ -192,17 +228,20 @@ export default function CreateDelivery() {
   return (
     <div className="book-delivery-container slide-up">
       <div className="booking-header">
-        <h1>Book a Shipment</h1>
+        <h1>New Delivery</h1>
         <p>Send packages anywhere in India or across the globe.</p>
       </div>
 
       <div className="stepper">
-        {STEPS.map((s) => (
-          <div key={s.id} className={`step-item ${step >= s.id ? 'active' : ''} ${step > s.id ? 'completed' : ''}`}>
-            <div className="step-icon">
-              {step > s.id ? <CheckCircle size={20} /> : <s.icon size={20} />}
+        {STEPS.map((s, idx) => (
+          <div key={s.id} className="step-wrapper" style={{ display: 'flex', alignItems: 'center', flex: idx < STEPS.length - 1 ? 1 : 'none' }}>
+            <div className={`step-item ${step === s.id ? 'active' : ''} ${step > s.id ? 'completed' : ''}`}>
+              <div className="step-icon">
+                {step > s.id ? <CheckCircle size={18} /> : <span>{s.id}</span>}
+              </div>
+              <span>{s.title}</span>
             </div>
-            <span>{s.title}</span>
+            {idx < STEPS.length - 1 && <div className="stepper-divider" />}
           </div>
         ))}
       </div>
@@ -216,9 +255,9 @@ export default function CreateDelivery() {
                 className={`type-card ${formData.type === 'DOMESTIC' ? 'selected' : ''}`}
                 onClick={() => setFormData({...formData, type: 'DOMESTIC'})}
               >
-                <div className="card-icon"><Package size={32}/></div>
+                <div className="card-icon"><Package size={24}/></div>
                 <div className="card-info">
-                  <h4>Domestic</h4>
+                  <h4>Domestic Delivery</h4>
                   <p>Pan-India coverage. 2-7 days estimated delivery.</p>
                 </div>
               </button>
@@ -226,22 +265,19 @@ export default function CreateDelivery() {
                 className={`type-card ${formData.type === 'INTERNATIONAL' ? 'selected' : ''}`}
                 onClick={() => setFormData({...formData, type: 'INTERNATIONAL'})}
               >
-                <div className="card-icon"><Globe size={32}/></div>
+                <div className="card-icon"><Globe size={24}/></div>
                 <div className="card-info">
-                  <h4>International</h4>
+                  <h4>International Shipping</h4>
                   <p>Worldwide shipping. Customs handling included.</p>
                 </div>
               </button>
-            </div>
-            <div className="actions-right">
-              <button className="btn btn-primary" onClick={handleNext}>Next Step <ChevronRight size={18}/></button>
             </div>
           </div>
         )}
 
         {step === 2 && (
           <div className="step-content">
-            <h3>Contact & Address Details</h3>
+            <h3>Addresses & Contact</h3>
             
             {defaultAddress && (
               <div className="autofill-box">
@@ -254,64 +290,79 @@ export default function CreateDelivery() {
 
             <div className="form-grid">
               <div className="form-section">
-                <h4>Sender Details</h4>
+                <div className="form-section-header">
+                  <UserCheck className="icon" size={20} />
+                  <h4>Sender Details</h4>
+                </div>
                 <div className="form-group">
                   <label>Full Name</label>
-                  <input type="text" className={`input-field ${errors.senderName ? 'error' : ''}`} value={formData.senderName} onChange={e => setFormData({...formData, senderName: e.target.value})} readOnly={useDefault} />
+                  <input type="text" className={`input-field ${errors.senderName ? 'error' : ''}`} value={formData.senderName} onChange={e => updateField(null, 'senderName', e.target.value, 'senderName')} readOnly={useDefault} placeholder="Enter full name" />
                   {errors.senderName && <span className="error-text">{errors.senderName}</span>}
                 </div>
                 <div className="form-group">
-                  <label>Phone Number (10 digits)</label>
-                  <input type="tel" className={`input-field ${errors.senderPhone ? 'error' : ''}`} value={formData.senderPhone} onChange={e => setFormData({...formData, senderPhone: e.target.value})} placeholder="9876543210" readOnly={useDefault} />
+                  <label>Phone Number</label>
+                  <input type="tel" className={`input-field ${errors.senderPhone ? 'error' : ''}`} value={formData.senderPhone} onChange={e => updateField(null, 'senderPhone', e.target.value, 'senderPhone')} placeholder="Enter 10-digit number" readOnly={useDefault} />
                   {errors.senderPhone && <span className="error-text">{errors.senderPhone}</span>}
                 </div>
                 <div className="form-group">
-                  <label>Street / Area</label>
-                  <input type="text" className={`input-field ${errors.pickupStreet ? 'error' : ''}`} value={formData.pickupAddress.street} onChange={e => setFormData({...formData, pickupAddress: {...formData.pickupAddress, street: e.target.value}})} readOnly={useDefault} />
+                  <label>Pickup Address</label>
+                  <input type="text" className={`input-field ${errors.pickupStreet ? 'error' : ''}`} value={formData.pickupAddress.street} onChange={e => updateField('pickupAddress', 'street', e.target.value, 'pickupStreet')} placeholder="Enter street, building, area" readOnly={useDefault} />
                   {errors.pickupStreet && <span className="error-text">{errors.pickupStreet}</span>}
                 </div>
                 <div className="form-row">
-                  <input type="text" placeholder="City" className="input-field" value={formData.pickupAddress.city} onChange={e => setFormData({...formData, pickupAddress: {...formData.pickupAddress, city: e.target.value}})} readOnly={useDefault} />
-                  <input type="text" placeholder="Pincode" className={`input-field ${errors.pickupPincode ? 'error' : ''}`} value={formData.pickupAddress.pincode} onChange={e => setFormData({...formData, pickupAddress: {...formData.pickupAddress, pincode: e.target.value}})} readOnly={useDefault} />
+                  <div className="form-group">
+                    <label>City</label>
+                    <input type="text" className="input-field" value={formData.pickupAddress.city} onChange={e => updateField('pickupAddress', 'city', e.target.value, 'pickupCity')} readOnly={useDefault} placeholder="City" />
+                  </div>
+                  <div className="form-group">
+                    <label>Pincode</label>
+                    <input type="text" className={`input-field ${errors.pickupPincode ? 'error' : ''}`} value={formData.pickupAddress.pincode} onChange={e => updateField('pickupAddress', 'pincode', e.target.value, 'pickupPincode')} readOnly={useDefault} placeholder="Pincode" />
+                  </div>
                 </div>
               </div>
 
               <div className="form-section">
-                <h4>Receiver Details</h4>
+                <div className="form-section-header">
+                  <MapPin className="icon" size={20} />
+                  <h4>Receiver Details</h4>
+                </div>
                 <div className="form-group">
-                  <label>Receiver Name</label>
-                  <input type="text" className={`input-field ${errors.receiverName ? 'error' : ''}`} value={formData.receiverName} onChange={e => setFormData({...formData, receiverName: e.target.value})} />
+                  <label>Full Name</label>
+                  <input type="text" className={`input-field ${errors.receiverName ? 'error' : ''}`} value={formData.receiverName} onChange={e => updateField(null, 'receiverName', e.target.value, 'receiverName')} placeholder="Enter full name" />
                   {errors.receiverName && <span className="error-text">{errors.receiverName}</span>}
                 </div>
                 <div className="form-group">
-                  <label>Receiver Phone</label>
-                  <input type="tel" className={`input-field ${errors.receiverPhone ? 'error' : ''}`} value={formData.receiverPhone} onChange={e => setFormData({...formData, receiverPhone: e.target.value})} />
+                  <label>Phone Number</label>
+                  <input type="tel" className={`input-field ${errors.receiverPhone ? 'error' : ''}`} value={formData.receiverPhone} onChange={e => updateField(null, 'receiverPhone', e.target.value, 'receiverPhone')} placeholder="Enter 10-digit number" />
                   {errors.receiverPhone && <span className="error-text">{errors.receiverPhone}</span>}
                 </div>
                 <div className="form-group">
-                  <label>Street / Area</label>
-                  <input type="text" className={`input-field ${errors.deliveryStreet ? 'error' : ''}`} value={formData.deliveryAddress.street} onChange={e => setFormData({...formData, deliveryAddress: {...formData.deliveryAddress, street: e.target.value}})} />
+                  <label>Delivery Address</label>
+                  <input type="text" className={`input-field ${errors.deliveryStreet ? 'error' : ''}`} value={formData.deliveryAddress.street} onChange={e => updateField('deliveryAddress', 'street', e.target.value, 'deliveryStreet')} placeholder="Enter street, building, area" />
                   {errors.deliveryStreet && <span className="error-text">{errors.deliveryStreet}</span>}
                 </div>
                 {formData.type === 'INTERNATIONAL' ? (
                   <div className="form-group">
                     <label>Destination Country</label>
-                    <select className="input-field" value={formData.deliveryAddress.country} onChange={e => setFormData({...formData, deliveryAddress: {...formData.deliveryAddress, country: e.target.value}})}>
+                    <select className="input-field" value={formData.deliveryAddress.country} onChange={e => updateField('deliveryAddress', 'country', e.target.value, 'deliveryCountry')}>
                       <option value="">Select Country</option>
                       {COUNTRIES.map(c => <option key={c} value={c}>{c}</option>)}
                     </select>
+                    {errors.deliveryCountry && <span className="error-text">{errors.deliveryCountry}</span>}
                   </div>
                 ) : (
                   <div className="form-row">
-                    <input type="text" placeholder="City" className="input-field" value={formData.deliveryAddress.city} onChange={e => setFormData({...formData, deliveryAddress: {...formData.deliveryAddress, city: e.target.value}})} />
-                    <input type="text" placeholder="Pincode" className="input-field" value={formData.deliveryAddress.pincode} onChange={e => setFormData({...formData, deliveryAddress: {...formData.deliveryAddress, pincode: e.target.value}})} />
+                    <div className="form-group">
+                      <label>City</label>
+                      <input type="text" className="input-field" value={formData.deliveryAddress.city} onChange={e => updateField('deliveryAddress', 'city', e.target.value, 'deliveryCity')} placeholder="City" />
+                    </div>
+                    <div className="form-group">
+                      <label>Pincode</label>
+                      <input type="text" className={`input-field ${errors.deliveryPincode ? 'error' : ''}`} value={formData.deliveryAddress.pincode} onChange={e => updateField('deliveryAddress', 'pincode', e.target.value, 'deliveryPincode')} placeholder="Pincode" />
+                    </div>
                   </div>
                 )}
               </div>
-            </div>
-            <div className="actions-between">
-              <button className="btn btn-outline" onClick={() => setStep(1)}><ChevronLeft size={18}/> Back</button>
-              <button className="btn btn-primary" onClick={handleNext}>Next: Package <ChevronRight size={18}/></button>
             </div>
           </div>
         )}
@@ -327,15 +378,16 @@ export default function CreateDelivery() {
                     type="number" 
                     className={`input-field ${errors.weight ? 'error' : ''}`} 
                     value={formData.packageDetails.weightKg} 
-                    onChange={e => setFormData({...formData, packageDetails: {...formData.packageDetails, weightKg: parseFloat(e.target.value)}})} 
+                    onChange={e => updateField('packageDetails', 'weightKg', parseFloat(e.target.value), 'weight')} 
                     min="0.1" 
                     step="0.1"
+                    placeholder="Enter weight in Kg"
                   />
                   {errors.weight && <span className="error-text">{errors.weight}</span>}
                 </div>
                 <div className="form-group">
                   <label>Package Type</label>
-                  <select className="input-field" value={formData.packageDetails.type} onChange={e => setFormData({...formData, packageDetails: {...formData.packageDetails, type: e.target.value}})}>
+                  <select className="input-field" value={formData.packageDetails.type} onChange={e => updateField('packageDetails', 'type', e.target.value, null)}>
                     <option value="DOCUMENT">Document</option>
                     <option value="PARCEL">Standard Parcel</option>
                     <option value="FRAGILE">Fragile Items</option>
@@ -344,11 +396,17 @@ export default function CreateDelivery() {
                 </div>
                 <div className="form-group">
                   <label>Pickup Date & Time</label>
-                  <input 
-                    type="datetime-local" 
-                    className={`input-field ${errors.pickupTime ? 'error' : ''}`} 
-                    value={formData.scheduledPickupTime} 
-                    onChange={e => setFormData({...formData, scheduledPickupTime: e.target.value})} 
+                  <DatePicker
+                    selected={formData.scheduledPickupTime ? new Date(formData.scheduledPickupTime) : null}
+                    onChange={(date) => updateField(null, 'scheduledPickupTime', date ? date.toISOString() : '', 'pickupTime')}
+                    showTimeSelect
+                    timeFormat="HH:mm"
+                    timeIntervals={30}
+                    timeCaption="Time"
+                    dateFormat="MMMM d, yyyy h:mm aa"
+                    className={`input-field ${errors.pickupTime ? 'error' : ''}`}
+                    placeholderText="Select Date & Time"
+                    minDate={new Date()}
                   />
                   {errors.pickupTime && <span className="error-text">{errors.pickupTime}</span>}
                 </div>
@@ -360,39 +418,36 @@ export default function CreateDelivery() {
                 </div>
                 {quote ? (
                   <div className="quote-body">
-                    <div className="price">₹{quote.totalAmount}</div>
+                    <div className="price">₹{quote.totalAmount} <span>incl. tax</span></div>
                     <p className="delivery-days"><Calendar size={14}/> Expected in {quote.estimatedDays} days</p>
                     <div className="quote-tags">
-                      <span>{formData.type} Shipping</span>
-                      <span>Trackable</span>
+                      <span>{formData.type}</span>
+                      <span>Insured</span>
+                      <span>Live Tracking</span>
                     </div>
                   </div>
                 ) : (
-                  <p className="quote-loading">Enter weight and destination to see live pricing...</p>
+                  <p className="quote-loading" style={{ color: '#64748b', fontSize: '13px' }}>Enter weight and destination to see live pricing...</p>
                 )}
               </div>
-            </div>
-            <div className="actions-between">
-              <button className="btn btn-outline" onClick={() => setStep(2)}><ChevronLeft size={18}/> Back</button>
-              <button className="btn btn-primary" onClick={handleNext}>Review Booking <ChevronRight size={18}/></button>
             </div>
           </div>
         )}
 
         {step === 4 && (
           <div className="step-content">
-            <h3>Final Review & Payment</h3>
+            <h3>Review & Confirm</h3>
             <div className="review-container">
-              <div className="review-grid">
-                <div className="review-section">
+              <div className="review-card-group">
+                <div className="review-card">
                   <h5>Shipment Route</h5>
                   <p><strong>From:</strong> {formData.pickupAddress.city} ({formData.pickupAddress.pincode})</p>
                   <p><strong>To:</strong> {formData.deliveryAddress.city} ({formData.deliveryAddress.pincode || formData.deliveryAddress.country})</p>
                 </div>
-                <div className="review-section">
+                <div className="review-card">
                   <h5>Receiver Contact</h5>
-                  <p>{formData.receiverName}</p>
-                  <p>{formData.receiverPhone}</p>
+                  <p><strong>Name:</strong> {formData.receiverName}</p>
+                  <p><strong>Phone:</strong> {formData.receiverPhone}</p>
                 </div>
               </div>
 
@@ -400,34 +455,53 @@ export default function CreateDelivery() {
                 <div className="breakdown-header">Fare Breakdown</div>
                 <div className="breakdown-item">
                   <span>Base Shipping Fee</span>
-                  <span>₹{formData.type === 'DOMESTIC' ? '100.00' : '1100.00'}</span>
+                  <span>₹{quote?.basePrice?.toFixed(2) || (formData.type === 'DOMESTIC' ? '100.00' : '1100.00')}</span>
                 </div>
                 <div className="breakdown-item">
-                  <span>Weight Surcharge ({formData.packageDetails.weightKg}kg × ₹{formData.type === 'DOMESTIC' ? '50' : '550'})</span>
-                  <span>₹{formData.packageDetails.weightKg * (formData.type === 'DOMESTIC' ? 50 : 550)}</span>
+                  <span>Weight Surcharge ({formData.packageDetails.weightKg}kg)</span>
+                  <span>₹{(quote?.totalAmount - (quote?.basePrice || 0))?.toFixed(2) || (formData.packageDetails.weightKg * (formData.type === 'DOMESTIC' ? 50 : 550)).toFixed(2)}</span>
                 </div>
                 <div className="total-divider"></div>
                 <div className="breakdown-item total">
                   <span>Total Amount</span>
-                  <span>₹{formData.type === 'DOMESTIC' ? (100 + formData.packageDetails.weightKg * 50) : (1100 + formData.packageDetails.weightKg * 550)}</span>
+                  <span>₹{quote?.totalAmount || (formData.type === 'DOMESTIC' ? (100 + formData.packageDetails.weightKg * 50) : (1100 + formData.packageDetails.weightKg * 550))}</span>
                 </div>
                 <div className="delivery-promise">
-                  <Truck size={14} /> Estimated Delivery: {quote?.estimatedDays || '---'} Days
+                  <Truck size={16} /> Estimated Delivery: {quote?.estimatedDays || '---'} Business Days
                 </div>
                 <div className="policy-disclaimer">
-                  <Clock size={12} /> Cancellation is only allowed within 1 hour of booking.
+                  <ShieldCheck size={14} /> Coverage up to ₹5,000 included in basic plan.
                 </div>
               </div>
             </div>
-
-            <div className="actions-between">
-              <button className="btn btn-outline" onClick={() => setStep(3)}><ChevronLeft size={18}/> Back</button>
-              <button className="btn btn-primary btn-book" onClick={handleSubmit} disabled={loading}>
-                {loading ? <Loader2 className="spinner" /> : <><Send size={18} /> Confirm & Book Now</>}
-              </button>
-            </div>
           </div>
         )}
+
+        <div className="step-actions">
+          {step > 1 ? (
+            <button className="btn-outline" onClick={() => setStep(step - 1)}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <ChevronLeft size={18} /> Back
+              </div>
+            </button>
+          ) : (
+            <div />
+          )}
+
+          {step < 4 ? (
+            <button className="btn-primary" onClick={handleNext}>
+              Next Step <ChevronRight size={18} />
+            </button>
+          ) : (
+            <button className="btn-primary" onClick={handleSubmit} disabled={loading}>
+              {loading ? (
+                <><Loader2 className="spinner" size={18} /> Processing...</>
+              ) : (
+                <><Send size={18} /> Confirm & Book <ArrowRight size={18} /></>
+              )}
+            </button>
+          )}
+        </div>
       </div>
     </div>
   );

@@ -1,9 +1,8 @@
-import { X, Send, MapPin, AlignLeft, Loader2, Building2 } from 'lucide-react';
-import { useState, useEffect, useRef } from 'react';
+import { X, Send, MapPin, AlignLeft, Loader2, Building2, Package, Info } from 'lucide-react';
+import { useState, useEffect } from 'react';
 import { deliveryApi } from '../api/deliveryApi';
 import './Modal.css';
 
-// Simple global cache outside the component to persist across re-mounts
 let cachedHubs = null;
 let lastFetchTime = 0;
 
@@ -18,11 +17,10 @@ export default function StatusUpdateModal({ delivery, nextStatus, onConfirm, onC
   useEffect(() => {
     const getHubs = async () => {
       const now = Date.now();
-      if (cachedHubs && (now - lastFetchTime < 300000)) { // 5 minutes cache
+      if (cachedHubs && (now - lastFetchTime < 300000)) {
         setHubs(cachedHubs);
         return;
       }
-
       setFetchingHubs(true);
       try {
         const data = await deliveryApi.getActiveHubs();
@@ -41,16 +39,11 @@ export default function StatusUpdateModal({ delivery, nextStatus, onConfirm, onC
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    
-    // Append hub info to description if selected
     let finalDescription = description;
     if (selectedHub) {
       const hub = hubs.find(h => h.hubCode === selectedHub);
-      if (hub) {
-        finalDescription = `[${hub.hubCode}] - ${description}`;
-      }
+      if (hub) finalDescription = `[${hub.hubCode}] - ${description}`;
     }
-
     try {
       await onConfirm(delivery.id, {
         status,
@@ -67,65 +60,83 @@ export default function StatusUpdateModal({ delivery, nextStatus, onConfirm, onC
 
   return (
     <div className="modal-overlay">
-      <div className="modal-content small-modal">
-        <div className="modal-header">
+      <div className="modal-content-premium">
+        <div className="modal-header-premium">
           <h2>Update Shipment Status</h2>
-          <button onClick={onClose} className="btn-icon"><X size={24} /></button>
+          <button onClick={onClose} className="btn-icon" style={{ padding: '8px' }}><X size={20} /></button>
         </div>
 
-        <form onSubmit={handleSubmit} className="modal-body">
-          <p className="modal-info">Updating <strong>{delivery.trackingNumber}</strong></p>
-          
-          <div className="form-row" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1rem' }}>
-            <div className="form-group" style={{ marginBottom: 0 }}>
-              <label>Status</label>
-              <select 
-                value={status} 
-                onChange={(e) => setStatus(e.target.value)}
-                className="status-select-modal"
+        <form onSubmit={handleSubmit}>
+          <div className="modal-body-premium">
+            
+            <div className="shipment-info-bar">
+              <Package size={18} style={{ color: '#64748b' }} />
+              <div>
+                Updating <strong>{delivery.trackingNumber}</strong>
+              </div>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginBottom: '24px' }}>
+              <div className="form-group">
+                <label className="input-label-premium">
+                  <Info size={14} /> Status
+                </label>
+                <select 
+                  value={status} 
+                  onChange={(e) => setStatus(e.target.value)}
+                  className="modal-select-premium"
+                  required
+                >
+                  <option value="PICKED_UP">PICKED UP</option>
+                  <option value="IN_TRANSIT">IN TRANSIT</option>
+                  <option value="OUT_FOR_DELIVERY">OUT FOR DELIVERY</option>
+                  <option value="DELIVERED">DELIVERED</option>
+                  <option value="RETURNED">RETURNED</option>
+                </select>
+              </div>
+
+              <div className="form-group">
+                <label className="input-label-premium">
+                  <Building2 size={14} /> Location (Hub)
+                </label>
+                <select 
+                  value={selectedHub} 
+                  onChange={(e) => setSelectedHub(e.target.value)}
+                  disabled={fetchingHubs}
+                  className="modal-select-premium"
+                >
+                  <option value="">-- Manual/Other --</option>
+                  {hubs.map(hub => (
+                    <option key={hub.id} value={hub.hubCode}>
+                      {hub.hubCode} - {hub.city}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            <div className="form-group">
+              <label className="input-label-premium">
+                <AlignLeft size={14} /> Update Message
+              </label>
+              <textarea 
+                placeholder="e.g. Package arrived at hub and is being processed."
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                className="modal-textarea-premium"
                 required
-              >
-                <option value="PICKED_UP">PICKED UP</option>
-                <option value="IN_TRANSIT">IN TRANSIT</option>
-                <option value="OUT_FOR_DELIVERY">OUT FOR DELIVERY</option>
-                <option value="DELIVERED">DELIVERED</option>
-                <option value="RETURNED">RETURNED</option>
-              </select>
-            </div>
-
-            <div className="form-group" style={{ marginBottom: 0 }}>
-              <label>Location (Hub)</label>
-              <select 
-                value={selectedHub} 
-                onChange={(e) => setSelectedHub(e.target.value)}
-                disabled={fetchingHubs}
-              >
-                <option value="">-- Manual/Other --</option>
-                {hubs.map(hub => (
-                  <option key={hub.id} value={hub.hubCode}>
-                    {hub.hubCode} - {hub.city}
-                  </option>
-                ))}
-              </select>
+                rows={4}
+              />
+              <p style={{ fontSize: '11px', color: '#94a3b8', marginTop: '8px' }}>
+                This message will be visible to the customer in their tracking timeline.
+              </p>
             </div>
           </div>
 
-          <div className="form-group">
-            <label>Update Message (Notification to Customer)</label>
-            <textarea 
-              placeholder="e.g. Package arrived at hub"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              className="description-textarea"
-              required
-              rows={3}
-            />
-          </div>
-
-          <div className="modal-footer">
-            <button type="button" onClick={onClose} className="btn btn-outline">Cancel</button>
-            <button type="submit" className="btn btn-primary" disabled={loading}>
-              {loading ? <Loader2 className="spinner" /> : <><Send size={18} /> Update & Notify</>}
+          <div className="modal-footer-premium">
+            <button type="button" onClick={onClose} className="btn-premium-ghost">Cancel</button>
+            <button type="submit" className="btn-premium-solid" disabled={loading}>
+              {loading ? <Loader2 className="spinner" size={18} /> : <><Send size={16} /> Update & Notify</>}
             </button>
           </div>
         </form>

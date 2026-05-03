@@ -7,6 +7,7 @@ export const AuthProvider = ({ children }) => {
     role: localStorage.getItem('role') || null,
     name: localStorage.getItem('name') || null,
     userId: localStorage.getItem('userId') || null,
+    profilePhoto: localStorage.getItem('profilePhoto') || null,
   });
 
   const login = (data) => {
@@ -14,6 +15,7 @@ export const AuthProvider = ({ children }) => {
     localStorage.setItem('role', data.role);
     localStorage.setItem('name', data.name);
     localStorage.setItem('userId', data.userId);
+    if (data.profilePhoto) localStorage.setItem('profilePhoto', data.profilePhoto);
     setUser(data);
   };
 
@@ -22,7 +24,8 @@ export const AuthProvider = ({ children }) => {
     localStorage.removeItem('role');
     localStorage.removeItem('name');
     localStorage.removeItem('userId');
-    setUser({ token: null, role: null, name: null, userId: null });
+    localStorage.removeItem('profilePhoto');
+    setUser({ token: null, role: null, name: null, userId: null, profilePhoto: null });
   };
 
   const isAdmin = () => {

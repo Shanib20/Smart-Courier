@@ -49,7 +49,7 @@ public class AuthService {
 
         // Return AuthResponse with requiresOtp = true
         return new AuthResponse(true, savedUser.getRole().name(),
-                                savedUser.getName(), savedUser.getId());
+                                savedUser.getName(), savedUser.getId(), savedUser.getProfilePhoto());
     }
 
     public AuthResponse login(LoginRequest request) {
@@ -67,23 +67,23 @@ public class AuthService {
             String otp = otpService.generateOtp(user.getEmail());
             emailService.sendOtpEmail(user.getEmail(), otp);
             return new AuthResponse(true, user.getRole().name(),
-                                    user.getName(), user.getId());
+                                    user.getName(), user.getId(), user.getProfilePhoto());
         }
         if (user.isTwoFactorEnabled()) {
             String otp = otpService.generateOtp(user.getEmail());
             emailService.sendOtpEmail(user.getEmail(), otp);
             return new AuthResponse(true, user.getRole().name(),
-                                    user.getName(), user.getId());
+                                    user.getName(), user.getId(), user.getProfilePhoto());
         }
 
         if (user.isPasswordChangeRequired()) {
-            return new AuthResponse(false, true, user.getRole().name(), user.getName(), user.getId());
+            return new AuthResponse(false, true, user.getRole().name(), user.getName(), user.getId(), user.getProfilePhoto());
         }
 
         String token = jwtUtil.generateToken(
             user.getEmail(), user.getRole().name(), user.getId());
         return new AuthResponse(token, user.getRole().name(),
-                                user.getName(), user.getId());
+                                user.getName(), user.getId(), user.getProfilePhoto());
     }
 
     public String verifyEmail(String email, String otp) {
@@ -110,13 +110,13 @@ public class AuthService {
         }
 
         if (user.isPasswordChangeRequired()) {
-            return new AuthResponse(false, true, user.getRole().name(), user.getName(), user.getId());
+            return new AuthResponse(false, true, user.getRole().name(), user.getName(), user.getId(), user.getProfilePhoto());
         }
 
         String token = jwtUtil.generateToken(
             user.getEmail(), user.getRole().name(), user.getId());
         return new AuthResponse(token, user.getRole().name(),
-                                user.getName(), user.getId());
+                                user.getName(), user.getId(), user.getProfilePhoto());
     }
 
     public void createAdmin(String email, String name) {

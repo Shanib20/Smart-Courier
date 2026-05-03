@@ -18,6 +18,7 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -32,6 +33,12 @@ class AuthServiceTest {
 
     @Mock
     private JwtUtil jwtUtil;
+
+    @Mock
+    private OtpService otpService;
+
+    @Mock
+    private EmailService emailService;
 
     @InjectMocks
     private AuthService authService;
@@ -53,16 +60,15 @@ class AuthServiceTest {
         when(userRepository.existsByEmail("alice@example.com")).thenReturn(false);
         when(passwordEncoder.encode("secret123")).thenReturn("encoded");
         when(userRepository.save(any(User.class))).thenReturn(savedUser);
-        when(jwtUtil.generateToken("alice@example.com", "CUSTOMER", 1L))
-                .thenReturn("jwt-token");
+        when(otpService.generateOtp("alice@example.com")).thenReturn("123456");
 
         AuthResponse response = authService.signup(request);
 
-        assertEquals("jwt-token", response.getToken());
+        assertEquals(true, response.isRequiresOtp());
         assertEquals("CUSTOMER", response.getRole());
         assertEquals("Alice", response.getName());
-        assertEquals(1L, response.getUserId());
         verify(userRepository).save(any(User.class));
+        verify(emailService).sendOtpEmail(eq("alice@example.com"), eq("123456"));
     }
 
     @Test
@@ -99,7 +105,7 @@ class AuthServiceTest {
 
         AuthResponse response = authService.login(request);
 
-        assertEquals("admin-token", response.getToken());
+        assertEquals(true, response.isRequiresPasswordChange());
         assertEquals("ADMIN", response.getRole());
         assertEquals("Alice", response.getName());
         assertEquals(7L, response.getUserId());

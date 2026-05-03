@@ -46,59 +46,79 @@ export default function ResetPassword() {
   return (
     <div className="auth-container">
       <div className="auth-left">
+        <div className="auth-bg-wrapper">
+          <img 
+            className="auth-bg-image" 
+            src="https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?auto=format&fit=crop&w=1920&q=80" 
+            alt="Logistics" 
+          />
+          <div className="auth-bg-overlay"></div>
+        </div>
+        
         <div className="auth-brand">
-          <Zap size={64} color="var(--accent)" className="logo-icon" />
-          <h1>SwiftCourier</h1>
+          <Zap size={32} className="logo-icon" />
+          <span className="auth-brand-text">SwiftCourier</span>
+        </div>
+        
+        <div className="auth-value-prop">
+          <h1>Finalize Recovery.</h1>
+          <p>Secure your account with a new set of credentials. Our end-to-end encryption ensures your data remains private.</p>
+        </div>
+        
+        <div className="auth-footer-info">
+          <div className="auth-footer-line"></div>
+          <span className="auth-footer-text">Institutional Stability Since 1998</span>
         </div>
       </div>
+      
       <div className="auth-right">
-        <div className="auth-form-wrapper">
-          <h2>Create New Password</h2>
+        <div className="auth-card">
+          <div className="auth-card-header">
+            <h2>Create New Password</h2>
+            <p>{errorMsg ? 'Invalid Token' : 'Enter your new password below to finalize account recovery.'}</p>
+          </div>
           
           {errorMsg ? (
-             <div style={{ textAlign: 'center' }}>
-               <p className="subtitle" style={{ color: 'var(--danger)' }}>{errorMsg}</p>
-               <div style={{ marginTop: '2rem' }}>
-                 <Link to="/forgot-password" className="btn btn-outline" style={{ textDecoration: 'none', display: 'block' }}>
-                   Request new link
-                 </Link>
+             <div className="auth-form">
+               <div className="auth-error-banner">
+                 <p>{errorMsg}</p>
                </div>
+               <Link to="/forgot-password" className="auth-submit-btn" style={{ textDecoration: 'none' }}>
+                 Request New Link
+               </Link>
              </div>
           ) : (
-            <>
-              <p className="subtitle">Enter your new password below.</p>
-              <form onSubmit={handleSubmit}>
-                <div className="form-group">
-                  <label htmlFor="password">New Password</label>
-                  <input 
-                    id="password" 
-                    type="password" 
-                    className="input-field" 
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    required 
-                    minLength={6}
-                    placeholder="••••••••"
-                  />
-                </div>
-                <div className="form-group">
-                  <label htmlFor="confirmPassword">Confirm Password</label>
-                  <input 
-                    id="confirmPassword" 
-                    type="password" 
-                    className="input-field" 
-                    value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
-                    required 
-                    minLength={6}
-                    placeholder="••••••••"
-                  />
-                </div>
-                <button type="submit" className="btn btn-primary auth-btn" disabled={loading}>
-                  {loading ? 'Saving...' : 'Reset Password'}
-                </button>
-              </form>
-            </>
+            <form className="auth-form" onSubmit={handleSubmit}>
+              <div className="auth-form-group">
+                <label htmlFor="password">New Password</label>
+                <input 
+                  id="password" 
+                  type="password" 
+                  className="auth-input" 
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required 
+                  minLength={6}
+                  placeholder="••••••••"
+                />
+              </div>
+              <div className="auth-form-group">
+                <label htmlFor="confirmPassword">Confirm Password</label>
+                <input 
+                  id="confirmPassword" 
+                  type="password" 
+                  className="auth-input" 
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  required 
+                  minLength={6}
+                  placeholder="••••••••"
+                />
+              </div>
+              <button type="submit" className="auth-submit-btn" disabled={loading}>
+                {loading ? 'Updating Credentials...' : 'Reset Password'}
+              </button>
+            </form>
           )}
         </div>
       </div>

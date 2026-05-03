@@ -16,6 +16,7 @@ import {
 import { deliveryApi } from '../api/deliveryApi';
 import { useToast } from '../hooks/useToast';
 import { useAuth } from '../hooks/useAuth';
+import usePageTitle from '../hooks/usePageTitle';
 import './BookDelivery.css';
 
 const STEPS = [
@@ -28,6 +29,7 @@ const STEPS = [
 const PHONE_REGEX = /^[6-9]\d{9}$/;
 
 export default function BookDelivery() {
+  usePageTitle('New Delivery');
   const { user } = useAuth();
   const { addToast } = useToast();
   const [step, setStep] = useState(1);

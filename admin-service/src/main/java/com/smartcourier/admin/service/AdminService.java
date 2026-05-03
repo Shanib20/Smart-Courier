@@ -28,18 +28,41 @@ public class AdminService {
     }
 
     public DashboardStats getDashboardStats() {
-        log.info("Fetching dashboard stats");
+        log.info("Fetching dashboard stats from analytics");
 
-        List<Map<String, Object>> deliveries = getAllDeliveriesFromService();
-        long total = deliveries.size();
-        long booked = countByStatus(deliveries, "BOOKED");
-        long inTransit = countByStatus(deliveries, "IN_TRANSIT");
-        long delivered = countByStatus(deliveries, "DELIVERED");
-        long failed = countByStatus(deliveries, "FAILED");
-        long totalHubs = hubRepository.count();
+        try {
+            Map<String, Object> analytics = deliveryClient.getAnalyticsSummary(7); // Match 'Reports' default range
+            Map<String, Object> statsMap = (Map<String, Object>) analytics.get("stats");
+            
+            long total = statsMap != null ? ((Number) statsMap.getOrDefault("TOTAL", 0)).longValue() : 0;
+            long booked = statsMap != null ? ((Number) statsMap.getOrDefault("BOOKED", 0)).longValue() : 0;
+            long inTransit = statsMap != null ? ((Number) statsMap.getOrDefault("IN_TRANSIT", 0)).longValue() : 0;
+            long delivered = statsMap != null ? ((Number) statsMap.getOrDefault("DELIVERED", 0)).longValue() : 0;
+            long failed = statsMap != null ? ((Number) statsMap.getOrDefault("FAILED", 0)).longValue() : 0;
+            
+            List<Map<String, Object>> hubPerformance = (List<Map<String, Object>>) analytics.get("hubPerformance");
+            long totalHubs = hubPerformance != null ? hubPerformance.size() : hubRepository.count();
 
-        return new DashboardStats(
-                total, booked, inTransit, delivered, failed, totalHubs);
+            // Calculate Revenue from trend data (sum of all points in the range)
+            List<Map<String, Object>> trend = (List<Map<String, Object>>) analytics.get("revenueTrend");
+            double revenue = 0;
+            if (trend != null) {
+                revenue = trend.stream()
+                        .mapToDouble(p -> ((Number) p.get("amount")).doubleValue())
+                        .sum();
+            }
+
+            DashboardStats ds = new DashboardStats(
+                    total, booked, inTransit, delivered, failed, totalHubs, revenue);
+            ds.setRevenueTrend(trend);
+            return ds;
+        } catch (Exception e) {
+            log.error("Failed to fetch analytics for dashboard: {}", e.getMessage());
+            // Fallback to basic counts if analytics fails
+            List<Map<String, Object>> deliveries = getAllDeliveriesFromService();
+            return new DashboardStats(
+                    deliveries.size(), 0, 0, 0, 0, hubRepository.count(), 0.0);
+        }
     }
 
     public List<Map<String, Object>> getRecentDeliveries() {

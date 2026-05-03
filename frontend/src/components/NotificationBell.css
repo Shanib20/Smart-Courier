@@ -7,11 +7,11 @@
 .bell-button {
   background: none;
   border: none;
-  color: var(--text-color);
+  color: #64748b;
   cursor: pointer;
   padding: 8px;
   border-radius: 50%;
-  transition: background 0.2s;
+  transition: all 0.2s;
   position: relative;
   display: flex;
   align-items: center;
@@ -19,14 +19,15 @@
 }
 
 .bell-button:hover {
-  background: rgba(255, 255, 255, 0.1);
+  background: #f8fafc;
+  color: #2563EB;
 }
 
 .bell-badge {
   position: absolute;
   top: 4px;
   right: 4px;
-  background: #ff4d4f;
+  background: #DC2626;
   color: white;
   font-size: 10px;
   font-weight: bold;
@@ -34,7 +35,7 @@
   border-radius: 10px;
   min-width: 16px;
   text-align: center;
-  border: 2px solid var(--bg-card);
+  border: 2px solid white;
 }
 
 .notification-dropdown {
@@ -44,10 +45,10 @@
   margin-top: 12px;
   width: 360px;
   max-height: 500px;
-  background: var(--bg-card);
-  border: 1px solid var(--border-color);
+  background: white;
+  border: 1px solid #e2e8f0;
   border-radius: 12px;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
   z-index: 1000;
   display: flex;
   flex-direction: column;
@@ -62,22 +63,24 @@
 
 .dropdown-header {
   padding: 16px;
-  border-bottom: 1px solid var(--border-color);
+  border-bottom: 1px solid #e2e8f0;
   display: flex;
   justify-content: space-between;
   align-items: center;
+  background-color: #f8fafc;
 }
 
 .dropdown-header h3 {
   margin: 0;
   font-size: 16px;
-  font-weight: 600;
+  font-weight: 700;
+  color: #0f172a;
 }
 
 .mark-all-btn {
   background: none;
   border: none;
-  color: var(--primary);
+  color: #2563EB;
   font-size: 13px;
   cursor: pointer;
   display: flex;
@@ -86,10 +89,11 @@
   padding: 4px 8px;
   border-radius: 4px;
   transition: background 0.2s;
+  font-weight: 600;
 }
 
 .mark-all-btn:hover {
-  background: rgba(var(--primary-rgb), 0.1);
+  background: #eff6ff;
 }
 
 .dropdown-body {
@@ -98,8 +102,8 @@
 }
 
 .notif-item {
-  padding: 12px 16px;
-  border-bottom: 1px solid var(--border-color);
+  padding: 16px;
+  border-bottom: 1px solid #f1f5f9;
   cursor: pointer;
   display: flex;
   gap: 12px;
@@ -108,11 +112,11 @@
 }
 
 .notif-item:hover {
-  background: rgba(255, 255, 255, 0.05);
+  background: #f8fafc;
 }
 
 .notif-item.unread {
-  background: rgba(var(--primary-rgb), 0.03);
+  background: #f0f7ff;
 }
 
 .notif-content {
@@ -122,56 +126,62 @@
 .notif-title {
   margin: 0 0 4px 0;
   font-size: 14px;
-  font-weight: 600;
-  color: var(--text-color);
+  font-weight: 700;
+  color: #0f172a;
 }
 
 .notif-message {
   margin: 0 0 6px 0;
   font-size: 13px;
-  color: var(--text-muted);
-  line-height: 1.4;
+  color: #475569;
+  line-height: 1.5;
 }
 
 .notif-time {
   font-size: 11px;
-  color: var(--text-muted);
+  color: #94a3b8;
 }
 
 .unread-dot {
   width: 8px;
   height: 8px;
-  background: var(--primary);
+  background: #2563EB;
   border-radius: 50%;
   margin-top: 6px;
+  flex-shrink: 0;
 }
 
 .notif-empty, .notif-loading {
   padding: 40px;
   text-align: center;
-  color: var(--text-muted);
+  color: #64748b;
+  font-size: 14px;
 }
 
 .dropdown-footer {
   padding: 12px;
   text-align: center;
-  border-top: 1px solid var(--border-color);
+  border-top: 1px solid #e2e8f0;
+  background-color: white;
 }
 
 .dropdown-footer button {
   background: none;
   border: none;
-  color: var(--text-muted);
+  color: #64748b;
   font-size: 13px;
   cursor: pointer;
+  font-weight: 500;
+  transition: color 0.2s;
 }
 
 .dropdown-footer button:hover {
-  color: var(--text-color);
+  color: #0f172a;
 }
 
 .spinner {
   animation: rotate 1s linear infinite;
+  color: #2563EB;
 }
 
 @keyframes rotate {

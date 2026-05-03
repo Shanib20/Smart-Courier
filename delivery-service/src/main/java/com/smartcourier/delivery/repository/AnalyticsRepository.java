@@ -21,14 +21,14 @@ public interface AnalyticsRepository extends JpaRepository<Delivery, Long> {
                    "CASE WHEN :days = 1 THEN DATE_FORMAT(created_at, '%H:00') ELSE DATE_FORMAT(created_at, '%Y-%m-%d') END as date, " +
                    "COALESCE(SUM(charge_amount), 0) as amount " +
                    "FROM deliveries " +
-                   "WHERE created_at >= DATE_SUB(NOW(), INTERVAL :days DAY) " +
+                   "WHERE status != 'CANCELLED' AND created_at >= DATE_SUB(NOW(), INTERVAL :days DAY) " +
                    "GROUP BY date " +
                    "ORDER BY MIN(created_at) ASC", nativeQuery = true)
     List<Object[]> getRevenueTrend(@Param("days") int days);
 
     @Query(value = "SELECT pickup_pincode, delivery_pincode, COUNT(*) as count, COALESCE(SUM(charge_amount), 0) as revenue " +
                    "FROM deliveries " +
-                   "WHERE created_at >= DATE_SUB(NOW(), INTERVAL :days DAY) " +
+                   "WHERE status != 'CANCELLED' AND created_at >= DATE_SUB(NOW(), INTERVAL :days DAY) " +
                    "GROUP BY pickup_pincode, delivery_pincode " +
                    "ORDER BY count DESC LIMIT 10", nativeQuery = true)
     List<Object[]> getTopRoutes(@Param("days") int days);
