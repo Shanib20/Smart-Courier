@@ -1,0 +1,117 @@
+.auth-container {
+  display: flex;
+  height: 100vh;
+  width: 100vw;
+  background-color: var(--bg);
+  overflow: hidden;
+}
+
+.auth-left {
+  flex: 1;
+  position: relative;
+  background-color: var(--surface);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
+}
+
+/* Courier-themed animated background pattern */
+.auth-left::before {
+  content: '';
+  position: absolute;
+  inset: -50%;
+  background-image: 
+    linear-gradient(rgba(245, 158, 11, 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(245, 158, 11, 0.05) 1px, transparent 1px);
+  background-size: 40px 40px;
+  transform: rotate(-15deg);
+  animation: bgScroll 20s linear infinite;
+  z-index: 0;
+}
+
+@keyframes bgScroll {
+  0% { transform: rotate(-15deg) translateY(0); }
+  100% { transform: rotate(-15deg) translateY(-40px); }
+}
+
+.auth-brand {
+  position: relative;
+  z-index: 1;
+  text-align: center;
+}
+
+.auth-brand .logo-icon {
+  margin-bottom: 1rem;
+}
+
+.auth-brand h1 {
+  font-size: 3rem;
+  letter-spacing: -1px;
+}
+
+.auth-brand p {
+  color: var(--text-muted);
+  font-size: 1.25rem;
+  margin-top: 0.5rem;
+}
+
+.auth-right {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 2rem;
+  max-width: 600px;
+  background-color: var(--bg);
+}
+
+.auth-form-wrapper {
+  width: 100%;
+  max-width: 400px;
+}
+
+.auth-form-wrapper h2 {
+  font-size: 2rem;
+  margin-bottom: 0.5rem;
+}
+
+.auth-form-wrapper p.subtitle {
+  color: var(--text-muted);
+  margin-bottom: 2rem;
+}
+
+.form-group {
+  margin-bottom: 1.5rem;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+  color: var(--text-muted);
+}
+
+.auth-btn {
+  width: 100%;
+  padding: 0.75rem;
+  font-size: 1rem;
+  margin-top: 1rem;
+}
+
+.auth-footer {
+  margin-top: 2rem;
+  text-align: center;
+  color: var(--text-muted);
+}
+
+@media (max-width: 768px) {
+  .auth-left {
+    display: none;
+  }
+  .auth-right {
+    max-width: 100%;
+  }
+}

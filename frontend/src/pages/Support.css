@@ -1,0 +1,211 @@
+.support-container {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 2rem 1rem;
+}
+
+.support-header {
+  text-align: center;
+  margin-bottom: 3rem;
+}
+
+.support-header h1 {
+  font-size: 2.5rem;
+  font-weight: 800;
+  margin-bottom: 0.5rem;
+}
+
+.support-header p {
+  color: var(--text-muted);
+  font-size: 1.1rem;
+}
+
+/* WhatsApp Main Card */
+.whatsapp-main-card {
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 24px;
+  padding: 3rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 3rem;
+  position: relative;
+  overflow: hidden;
+}
+
+.wa-badge {
+  background: rgba(37, 211, 102, 0.1);
+  color: #25D366;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  padding: 0.4rem 0.8rem;
+  border-radius: 30px;
+  display: inline-block;
+  margin-bottom: 1rem;
+}
+
+.whatsapp-info h2 {
+  font-size: 1.8rem;
+  margin-bottom: 0.75rem;
+}
+
+.whatsapp-info p {
+  color: var(--text-muted);
+  margin-bottom: 2rem;
+}
+
+.wa-btn {
+  background: #25D366;
+  color: white;
+  border: none;
+  padding: 1rem 2rem;
+  border-radius: 12px;
+  font-weight: 700;
+  font-size: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: 0 10px 20px rgba(37, 211, 102, 0.2);
+}
+
+.wa-btn:hover {
+  background: #128C7E;
+  transform: translateY(-2px);
+  box-shadow: 0 15px 30px rgba(37, 211, 102, 0.3);
+}
+
+.wa-visual {
+  color: var(--accent);
+  opacity: 0.2;
+}
+
+/* Quick Issues */
+.quick-issues-section {
+  margin-bottom: 4rem;
+}
+
+.quick-issues-section h3 {
+  margin-bottom: 1.5rem;
+  font-size: 1.25rem;
+}
+
+.issues-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1.25rem;
+}
+
+.issue-card {
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  padding: 1.5rem;
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-align: left;
+}
+
+.issue-card:hover {
+  border-color: var(--accent);
+  background: rgba(255, 255, 255, 0.02);
+  transform: translateY(-3px);
+}
+
+.issue-card span {
+  flex: 1;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.issue-card .arrow {
+  color: var(--text-muted);
+  opacity: 0.5;
+}
+
+/* Split Grid (FAQ & Hours) */
+.support-split-grid {
+  display: grid;
+  grid-template-columns: 1.5fr 1fr;
+  gap: 3rem;
+}
+
+.faq-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.faq-item {
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.faq-question {
+  padding: 1.25rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+  font-weight: 600;
+  transition: background 0.2s;
+}
+
+.faq-question:hover { background: rgba(255,255,255,0.02); }
+
+.faq-answer {
+  padding: 0 1.25rem 1.25rem 1.25rem;
+  color: var(--text-muted);
+  line-height: 1.6;
+  font-size: 0.95rem;
+}
+
+/* Hours Card */
+.hours-card {
+  background: var(--surface);
+  border: 1px solid var(--border-color);
+  border-radius: 20px;
+  padding: 2rem;
+}
+
+.hours-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 2rem;
+  color: var(--accent);
+}
+
+.hour-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 1rem 0;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.hour-row span { color: var(--text-muted); }
+.hour-row .closed { color: var(--danger); }
+
+.urgent-note {
+  margin-top: 2rem;
+  background: rgba(255,255,255,0.03);
+  padding: 1rem;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+
+@media (max-width: 850px) {
+  .support-split-grid { grid-template-columns: 1fr; }
+  .whatsapp-main-card { flex-direction: column; text-align: center; padding: 2rem; }
+  .wa-visual { display: none; }
+}

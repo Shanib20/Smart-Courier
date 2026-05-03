@@ -1,0 +1,33 @@
+package com.smartcourier.auth.dto;
+
+import java.time.LocalDateTime;
+
+public class DeliveryStatusMessage {
+    private String trackingNumber;
+    private String status;
+    private String description;
+    private String customerEmail;
+    @com.fasterxml.jackson.annotation.JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
+    private java.time.LocalDateTime eventTime;
+
+    public DeliveryStatusMessage() {}
+
+    public DeliveryStatusMessage(String trackingNumber, String status, String description, String customerEmail, LocalDateTime eventTime) {
+        this.trackingNumber = trackingNumber;
+        this.status = status;
+        this.description = description;
+        this.customerEmail = customerEmail;
+        this.eventTime = eventTime;
+    }
+
+    public String getTrackingNumber() { return trackingNumber; }
+    public void setTrackingNumber(String trackingNumber) { this.trackingNumber = trackingNumber; }
+    public String getStatus() { return status; }
+    public void setStatus(String status) { this.status = status; }
+    public String getDescription() { return description; }
+    public void setDescription(String description) { this.description = description; }
+    public String getCustomerEmail() { return customerEmail; }
+    public void setCustomerEmail(String customerEmail) { this.customerEmail = customerEmail; }
+    public LocalDateTime getEventTime() { return eventTime; }
+    public void setEventTime(LocalDateTime eventTime) { this.eventTime = eventTime; }
+}

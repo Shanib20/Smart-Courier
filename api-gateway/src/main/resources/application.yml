@@ -1,0 +1,55 @@
+server:
+  port: 8080
+
+spring:
+  config:
+    import: ${SPRING_CONFIG_IMPORT:optional:configserver:http://localhost:8888}
+  application:
+    name: api-gateway
+  servlet:
+    multipart:
+      enabled: true
+      max-file-size: 10MB
+      max-request-size: 10MB
+  cloud:
+    config:
+      fail-fast: false
+
+smartcourier:
+  routing:
+    auth-base-url: ${AUTH_SERVICE_URL:http://localhost:8081}
+    delivery-base-url: ${DELIVERY_SERVICE_URL:http://localhost:8082}
+    tracking-base-url: ${TRACKING_SERVICE_URL:http://localhost:8083}
+    admin-base-url: ${ADMIN_SERVICE_URL:http://localhost:8084}
+
+eureka:
+  client:
+    service-url:
+      defaultZone: ${EUREKA_SERVER_URL:http://localhost:8761/eureka/}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health, info
+  endpoint:
+    health:
+      show-details: always
+  tracing:
+    sampling:
+      probability: 1.0
+  zipkin:
+    tracing:
+      endpoint: ${ZIPKIN_ENDPOINT:http://localhost:9411/api/v2/spans}
+
+jwt:
+  secret: ${JWT_SECRET:dGhpc2lzYXZlcnlsb25nc2VjcmV0a2V5Zm9yc21hcnRjb3VyaWVy}
+
+springdoc:
+  api-docs:
+    enabled: false
+  swagger-ui:
+    path: /swagger-ui/index.html
+    config-url: /v3/api-docs/swagger-config
+    persistAuthorization: true
+    disable-swagger-default-url: true

@@ -1,0 +1,32 @@
+# Logs
+*.log
+
+# IDEs and editors
+.vscode/
+.metadata/
+.idea/
+*.swp
+*.swo
+
+# OS files
+Thumbs.db
+.DS_Store
+
+# Java/Maven
+target/
+*.class
+
+# Node/Frontend
+node_modules/
+dist/
+build/
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Temp files
+del
+dir
+git
+rmdir

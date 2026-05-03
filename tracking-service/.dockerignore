@@ -1,0 +1,8 @@
+target/
+.settings/
+.project
+.classpath
+.factorypath
+HELP.md
+hs_err_pid*.log
+uploads/
