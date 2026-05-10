@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { useToast } from '../hooks/useToast';
@@ -16,16 +16,26 @@ export default function Login() {
   const [isOtpStep, setIsOtpStep] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const { login } = useAuth();
+  const { user, login } = useAuth();
   const { addToast } = useToast();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    if (user?.token) {
+      if (user.role === 'ADMIN') {
+        navigate('/admin/dashboard', { replace: true })
+      } else {
+        navigate('/dashboard', { replace: true });
+      }
+    }
+  }, [user, navigate])
 
   const handleLoginSuccess = (response) => {
     if (response.requiresPasswordChange) {
       navigate('/force-password-change', { state: { email } });
       return;
     }
-    
+
     login(response);
     addToast('Login successful!', 'success');
     if (response.role === 'ADMIN') {
@@ -76,54 +86,54 @@ export default function Login() {
     <div className="auth-container">
       <div className="auth-left">
         <div className="auth-bg-wrapper">
-          <img 
-            className="auth-bg-image" 
-            src="https://images.unsplash.com/photo-1580674285054-bed31e145f59?auto=format&fit=crop&w=1920&q=80" 
-            alt="Warehouse" 
+          <img
+            className="auth-bg-image"
+            src="https://images.unsplash.com/photo-1580674285054-bed31e145f59?auto=format&fit=crop&w=1920&q=80"
+            alt="Warehouse"
           />
           <div className="auth-bg-overlay"></div>
         </div>
-        
+
         <div className="auth-brand">
           <Package size={32} className="logo-icon" />
           <span className="auth-brand-text">SmartCourier</span>
         </div>
-        
+
         <div className="auth-value-prop">
           <h1>Global logistics managed with surgical precision.</h1>
           <p>Experience the future of supply chain management. Real-time tracking, intelligent routing, and automated manifest control in one unified command center.</p>
         </div>
-        
+
         <div className="auth-footer-info">
           <div className="auth-footer-line"></div>
           <span className="auth-footer-text">Institutional Stability Since 1998</span>
         </div>
       </div>
-      
+
       <div className="auth-right">
         <div className="auth-card">
           <div className="auth-card-header">
             <h2>Welcome back</h2>
             <p>{isOtpStep ? 'Enter the 2FA code sent to your email.' : 'Enter your credentials to access the logistics dashboard.'}</p>
           </div>
-          
+
           {error && (
             <div className="auth-error-banner">
               <p>{error}</p>
             </div>
           )}
-          
+
           {isOtpStep ? (
             <form className="auth-form" onSubmit={handleOtpSubmit}>
               <div className="auth-form-group">
                 <label htmlFor="otp">Enter 2FA Code</label>
-                <input 
-                  id="otp" 
-                  type="text" 
-                  className="auth-input" 
+                <input
+                  id="otp"
+                  type="text"
+                  className="auth-input"
                   value={otp}
                   onChange={(e) => setOtp(e.target.value)}
-                  required 
+                  required
                   placeholder="123456"
                 />
               </div>
@@ -136,13 +146,13 @@ export default function Login() {
             <form className="auth-form" onSubmit={handleSubmit}>
               <div className="auth-form-group">
                 <label htmlFor="email">Email Address</label>
-                <input 
-                  id="email" 
-                  type="email" 
-                  className="auth-input" 
+                <input
+                  id="email"
+                  type="email"
+                  className="auth-input"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  required 
+                  required
                   placeholder="name@company.com"
                 />
               </div>
@@ -152,17 +162,17 @@ export default function Login() {
                   <Link to="/forgot-password" className="auth-forgot-link">Forgot Password?</Link>
                 </div>
                 <div className="password-input-wrapper">
-                  <input 
-                    id="password" 
-                    type={showPassword ? "text" : "password"} 
-                    className="auth-input" 
+                  <input
+                    id="password"
+                    type={showPassword ? "text" : "password"}
+                    className="auth-input"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     required
                     placeholder="••••••••"
                   />
-                  <button 
-                    type="button" 
+                  <button
+                    type="button"
                     className="password-toggle-btn"
                     onClick={() => setShowPassword(!showPassword)}
                     tabIndex="-1"
@@ -177,7 +187,7 @@ export default function Login() {
               </button>
             </form>
           )}
-          
+
           <div className="auth-footer-link">
             Don't have an account? <Link to="/signup">Sign up</Link>
           </div>
